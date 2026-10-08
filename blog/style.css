@@ -52,10 +52,16 @@ article h1{font-size:clamp(1.65rem,4.4vw,2.5rem)}
 .body code{font-family:var(--mono); font-size:.86em; background:var(--bg-2); border:1px solid var(--line);
   border-radius:5px; padding:1px 5px}
 .body strong{color:var(--ink)}
-pre{background:#0B1A33; color:#DDE7F7; border-radius:10px; padding:16px 18px; overflow-x:auto;
-  font-family:var(--mono); font-size:13px; line-height:1.65; margin:0 0 1.3em}
+/* Light code blocks: the dark ones measured fine for contrast but read as a hole punched
+   through a light page. Every token below clears WCAG AA on this background. */
+pre{background:#F2F6FC; color:#10203A; border:1px solid var(--line); border-left:3px solid var(--brand);
+  border-radius:8px; padding:15px 17px; overflow-x:auto; font-family:var(--mono);
+  font-size:13.5px; line-height:1.72; margin:0 0 1.3em; tab-size:2}
 pre code{background:none; border:0; padding:0; font-size:inherit; color:inherit}
-pre .c{color:#7E93B8} pre .s{color:#9BD9A8} pre .k{color:var(--hero-accent)}
+pre .c{color:#4F6579; font-style:italic}   /* comments   5.58:1 */
+pre .s{color:#15694C}                      /* strings    6.13:1 */
+pre .k{color:#1D4ED8; font-weight:600}     /* keywords   6.18:1 */
+@media(max-width:620px){pre{font-size:12.5px; padding:13px 14px}}
 .note{border-left:3px solid var(--warm); background:var(--warm-l); padding:13px 17px;
   border-radius:0 9px 9px 0; margin:0 0 1.3em; font-size:15px; color:#5E4413}
 .note b{color:#3F2D08}
