@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://blog.weteachkubernetes.com/</loc><lastmod>2026-10-08</lastmod></url>
+  <url><loc>https://blog.weteachkubernetes.com/containers-before-kubernetes/</loc><lastmod>2026-10-08</lastmod></url>
+  <url><loc>https://blog.weteachkubernetes.com/the-api-object-model/</loc><lastmod>2026-10-08</lastmod></url>
+  <url><loc>https://blog.weteachkubernetes.com/deployments-probes-and-rollouts/</loc><lastmod>2026-10-08</lastmod></url>
+  <url><loc>https://blog.weteachkubernetes.com/config-secrets-and-the-edge-cases/</loc><lastmod>2026-10-08</lastmod></url>
+  <url><loc>https://blog.weteachkubernetes.com/declarative-delivery/</loc><lastmod>2026-10-08</lastmod></url>
+  <url><loc>https://blog.weteachkubernetes.com/control-plane-and-etcd/</loc><lastmod>2026-10-08</lastmod></url>
+  <url><loc>https://blog.weteachkubernetes.com/rbac-and-multi-tenancy/</loc><lastmod>2026-10-08</lastmod></url>
+  <url><loc>https://blog.weteachkubernetes.com/troubleshooting-under-time-pressure/</loc><lastmod>2026-10-08</lastmod></url>
+  <url><loc>https://blog.weteachkubernetes.com/pod-networking-from-first-principles/</loc><lastmod>2026-10-08</lastmod></url>
+  <url><loc>https://blog.weteachkubernetes.com/network-policy-you-can-debug/</loc><lastmod>2026-10-08</lastmod></url>
+  <url><loc>https://blog.weteachkubernetes.com/gateway-api-and-the-mesh-decision/</loc><lastmod>2026-10-08</lastmod></url>
+  <url><loc>https://blog.weteachkubernetes.com/admission-control-and-policy-as-code/</loc><lastmod>2026-10-08</lastmod></url>
+  <url><loc>https://blog.weteachkubernetes.com/supply-chain-and-image-provenance/</loc><lastmod>2026-10-08</lastmod></url>
+  <url><loc>https://blog.weteachkubernetes.com/runtime-detection-and-response/</loc><lastmod>2026-10-08</lastmod></url>
+  <url><loc>https://blog.weteachkubernetes.com/getting-a-gpu-into-a-pod/</loc><lastmod>2026-10-08</lastmod></url>
+  <url><loc>https://blog.weteachkubernetes.com/serving-a-model-like-a-production-service/</loc><lastmod>2026-10-08</lastmod></url>
+  <url><loc>https://blog.weteachkubernetes.com/scaling-inference-on-real-traffic/</loc><lastmod>2026-10-08</lastmod></url>
+  <url><loc>https://blog.weteachkubernetes.com/capacity-bin-packing-and-autoscaling/</loc><lastmod>2026-10-08</lastmod></url>
+  <url><loc>https://blog.weteachkubernetes.com/slos-people-actually-use/</loc><lastmod>2026-10-08</lastmod></url>
+  <url><loc>https://blog.weteachkubernetes.com/extending-kubernetes-yourself/</loc><lastmod>2026-10-08</lastmod></url>
+</urlset>

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admission control and policy as code — We Teach Kubernetes</title>
+<meta name="description" content="Pod Security Admission first, then a policy engine for the rules PSA cannot express and a webhook only when nothing else will do.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/admission-control-and-policy-as-code/">
+<link rel="stylesheet" href="../style.css">
+<meta property="og:title" content="Admission control and policy as code">
+<meta property="og:description" content="Pod Security Admission first, then a policy engine for the rules PSA cannot express and a webhook only when nothing else will do.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/admission-control-and-policy-as-code/">
+<meta property="og:type" content="article">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<article><div class="wrap">
+  <div class="kicker">Security</div>
+  <h1>Admission control and policy as code</h1>
+  <p class="dek">Pod Security Admission first, then a policy engine for the rules PSA cannot express and a webhook only when nothing else will do.</p>
+  <div class="meta">
+    <span class="m tag">CKS</span><span class="m topic">Security</span><span class="m tag">KCSA</span>
+    <span class="m">10 min read</span>
+    <span class="byline">by <a href="https://github.com/Kyle-Law">Kyle Law</a> · 2026-10-08</span>
+  </div>
+  <div class="body">
+      <p>Admission control is the last point at which you can say no. It runs after authentication and authorisation, after the object has been validated, and before anything is written to etcd &mdash; so a rejection means the bad object never existed.</p>
+      <h2>Three tiers, in order of how much they cost you</h2>
+      <ol><li><strong>Pod Security Admission</strong> &mdash; built in, three labels, no components to run. Covers the dangerous pod fields.</li><li><strong>A policy engine</strong> (Kyverno, Gatekeeper) &mdash; declarative rules for everything else, including mutation and cross-object checks.</li><li><strong>A custom webhook</strong> &mdash; arbitrary code, maximum power, and now you own an availability problem.</li></ol>
+      <p>Most teams reach straight for tier two and skip tier one, then write forty policies reimplementing what three labels would have done.</p>
+      <h2>Pod Security Admission, which is free</h2>
+      <pre><code>apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-a
+  labels:
+    pod-security.kubernetes.io/enforce: baseline     <span class="c"># reject the worst</span>
+    pod-security.kubernetes.io/enforce-version: v1.31
+    pod-security.kubernetes.io/audit: restricted     <span class="c"># log what would fail</span>
+    pod-security.kubernetes.io/warn: restricted      <span class="c"># warn the applier</span></code></pre>
+      <div class="note">The sequence that works: set <code>warn</code> and <code>audit</code> to <code>restricted</code> while <code>enforce</code> stays at <code>baseline</code>. You get the full list of what would break, in warnings and the audit log, without breaking it. Tighten <code>enforce</code> once that list is empty.</div>
+      <p><code>baseline</code> blocks privileged containers, host namespaces, hostPath and dangerous capabilities. <code>restricted</code> additionally requires non-root, dropping all capabilities and a seccomp profile. The gap between them is where almost every real application argument happens.</p>
+      <h2>Policy engines: validate, then mutate, then generate</h2>
+      <pre><code>apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-requests
+spec:
+  validationFailureAction: Audit      <span class="c"># start here, never Enforce</span>
+  rules:
+    - name: resources-set
+      match:
+        any:
+          - resources: { kinds: [Pod] }
+      validate:
+        message: &quot;every container needs cpu and memory requests&quot;
+        pattern:
+          spec:
+            containers:
+              - resources:
+                  requests:
+                    memory: &quot;?*&quot;
+                    cpu: &quot;?*&quot;</code></pre>
+      <p>The underrated half is mutation and generation: default a security context rather than rejecting pods that lack one, or generate a default-deny NetworkPolicy into every new namespace automatically. A policy that fixes the problem produces far less friction than one that lectures about it.</p>
+      <h2>The failure mode to design for</h2>
+      <div class="gotcha"><b>A validating webhook with <code>failurePolicy: Fail</code> that becomes unavailable will block every matching API write in the cluster.</b> If its scope includes namespaces, and the webhook pod needs a namespace, you have a deadlock that survives restarts. This has taken down real clusters. Always exclude <code>kube-system</code> and your policy engine’s own namespace, and think hard before <code>Fail</code>.</div>
+      <pre><code><span class="c"># the exclusion that saves you</span>
+namespaceSelector:
+  matchExpressions:
+    - key: kubernetes.io/metadata.name
+      operator: NotIn
+      values: [kube-system, kyverno]</code></pre>
+      <h2>Policy that people do not route around</h2>
+      <ul><li><strong>Audit before enforce</strong>, always. Ship the rule in audit mode, read what it would have blocked, then decide.</li><li><strong>Error messages with the fix in them.</strong> &ldquo;policy violation&rdquo; gets you a ticket; &ldquo;add resources.requests.memory, see &lt;link&gt;&rdquo; gets you a fixed manifest.</li><li><strong>Exceptions as objects, with expiry.</strong> A documented, time-limited exception beats a policy quietly weakened for everyone.</li><li><strong>Test in CI.</strong> Both engines can evaluate policies against manifests without a cluster, so a developer finds out in their pull request, not at deploy.</li></ul>
+      <h2>What to actually do with this</h2>
+      <ul><li>Add PSA labels in warn mode to every namespace today. It costs nothing and breaks nothing.</li><li>Read the warnings for a week before enforcing anything.</li><li>Check the <code>failurePolicy</code> and namespace exclusions on every webhook already in your cluster.</li></ul>
+  </div>
+  <div class="back">
+    <b>This article covers one checkpoint on the roadmap.</b>
+    <a href="https://weteachkubernetes.com/#admission-policy">Open <strong>Admission control and policy as code</strong> on the roadmap &rarr;</a>
+    — it lists what this depends on and everything else written about it.
+  </div>
+  <p class="fix">Something wrong or out of date?
+    <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=blog%3A%20admission-control-and-policy-as-code">Open an issue</a> — corrections are
+    welcome and get credited.</p>
+</div></article>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>

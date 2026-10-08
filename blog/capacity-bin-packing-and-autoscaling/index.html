@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Capacity, bin-packing and autoscaling — We Teach Kubernetes</title>
+<meta name="description" content="Requests and limits chosen from data, plus node autoscaling that does not thrash.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/capacity-bin-packing-and-autoscaling/">
+<link rel="stylesheet" href="../style.css">
+<meta property="og:title" content="Capacity, bin-packing and autoscaling">
+<meta property="og:description" content="Requests and limits chosen from data, plus node autoscaling that does not thrash.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/capacity-bin-packing-and-autoscaling/">
+<meta property="og:type" content="article">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<article><div class="wrap">
+  <div class="kicker">Platform and scale</div>
+  <h1>Capacity, bin-packing and autoscaling</h1>
+  <p class="dek">Requests and limits chosen from data, plus node autoscaling that does not thrash.</p>
+  <div class="meta">
+    <span class="m topic">Scheduling</span><span class="m tag">CKA</span>
+    <span class="m">10 min read</span>
+    <span class="byline">by <a href="https://github.com/Kyle-Law">Kyle Law</a> · 2026-10-08</span>
+  </div>
+  <div class="body">
+      <p>Requests and limits are the two most consequential numbers in a pod spec and the two most often copied from an example. They do completely different jobs, and confusing them produces either a cluster that is 80% idle or one that evicts things at random.</p>
+      <h2>Requests schedule. Limits constrain.</h2>
+      <ul><li><strong>Requests</strong> are what the scheduler reserves. They decide where a pod goes and how full a node is considered. They are not enforced at runtime.</li><li><strong>Limits</strong> are enforced by the kernel. Over a CPU limit, you are throttled; over a memory limit, you are killed.</li></ul>
+      <p>So a pod requesting 100m CPU and limited to 2 cores may be scheduled onto a busy node and then try to use twenty times what it reserved. That works until the node is contended, at which point everything on it gets slow together.</p>
+      <h2>QoS classes, and who dies first</h2>
+      <ul><li><strong>Guaranteed</strong> &mdash; requests equal limits for every container. Evicted last.</li><li><strong>Burstable</strong> &mdash; requests set, limits higher or absent. Evicted in the middle, worst-offender first.</li><li><strong>BestEffort</strong> &mdash; nothing set. Evicted first, always.</li></ul>
+      <div class="note">This is a decision you make by accident if you do not make it deliberately. A production database with no resource fields is BestEffort, which means it is the first thing the kubelet kills under node pressure. Set requests equal to limits on anything you genuinely cannot lose.</div>
+      <h2>The CPU-limit argument</h2>
+      <p>There is a real case for setting no CPU limit at all. A CPU limit throttles in fixed periods, and a latency-sensitive service with a modest limit can be throttled while the node is mostly idle &mdash; you have taken a latency hit to prevent a problem that was not occurring. The counter-argument is predictability and noisy neighbours.</p>
+      <pre><code><span class="c"># the signal that this is happening to you</span>
+rate(container_cpu_cfs_throttled_seconds_total[5m]) &gt; 0</code></pre>
+      <p>A defensible position: always set CPU <em>requests</em> accurately, set memory requests and limits equal, and leave CPU limits off for latency-sensitive services while keeping them for batch. Memory is different because it is incompressible &mdash; there is no graceful degradation, only the OOM killer.</p>
+      <h2>Get the numbers from the cluster, not from a guess</h2>
+      <pre><code>kubectl top pods -n prod --sort-by=memory
+
+<span class="c"># p95 actual usage over a week, which is what a request should be based on</span>
+quantile_over_time(0.95,
+  container_memory_working_set_bytes{namespace=&quot;prod&quot;}[7d])
+
+<span class="c"># requested versus used, per namespace - your idle percentage</span>
+sum(kube_pod_container_resource_requests{resource=&quot;cpu&quot;}) by (namespace)
+  / sum(rate(container_cpu_usage_seconds_total[1h])) by (namespace)</code></pre>
+      <p>VPA in recommendation mode is worth running for this even if you never let it act: it watches real usage and tells you what it would set, which is a better starting point than anyone’s intuition.</p>
+      <h2>Node autoscaling, and consolidation</h2>
+      <p>The Cluster Autoscaler adds nodes from predefined groups when pods are unschedulable. Karpenter instead picks instance types to fit the pending pods, and continuously consolidates &mdash; replacing several underused nodes with one cheaper node.</p>
+      <div class="gotcha"><b>Consolidation moves running pods, and it will respect only what you have told it to respect.</b> Without a PodDisruptionBudget, consolidating a node can take down every replica of a service at once, legitimately, because nothing said otherwise. Every workload that matters needs a PDB <em>before</em> you enable consolidation.</div>
+      <pre><code>apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: { name: api }
+spec:
+  minAvailable: 2            <span class="c"># or maxUnavailable: 1</span>
+  selector:
+    matchLabels: { app: api }</code></pre>
+      <p>Also mind the interaction with topology spread: a pod spread across three zones with <code>whenUnsatisfiable: DoNotSchedule</code> constrains which nodes the autoscaler can usefully add. Unschedulable pods with an autoscaler that is doing nothing is almost always a constraint it cannot satisfy, not a broken autoscaler.</p>
+      <h2>What to actually do with this</h2>
+      <ul><li>Find every pod with no resource fields. Those are BestEffort and will die first.</li><li>Set memory requests equal to limits on anything stateful.</li><li>Check for CFS throttling on your latency-sensitive services.</li><li>Write PDBs before enabling consolidation, not after the first incident.</li></ul>
+  </div>
+  <div class="back">
+    <b>This article covers one checkpoint on the roadmap.</b>
+    <a href="https://weteachkubernetes.com/#capacity">Open <strong>Capacity, bin-packing and autoscaling</strong> on the roadmap &rarr;</a>
+    — it lists what this depends on and everything else written about it.
+  </div>
+  <p class="fix">Something wrong or out of date?
+    <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=blog%3A%20capacity-bin-packing-and-autoscaling">Open an issue</a> — corrections are
+    welcome and get credited.</p>
+</div></article>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>

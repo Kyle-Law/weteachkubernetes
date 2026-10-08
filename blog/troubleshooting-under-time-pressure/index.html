@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Troubleshooting under time pressure — We Teach Kubernetes</title>
+<meta name="description" content="A fixed order of operations for a broken cluster, so you stop guessing when it matters most.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/troubleshooting-under-time-pressure/">
+<link rel="stylesheet" href="../style.css">
+<meta property="og:title" content="Troubleshooting under time pressure">
+<meta property="og:description" content="A fixed order of operations for a broken cluster, so you stop guessing when it matters most.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/troubleshooting-under-time-pressure/">
+<meta property="og:type" content="article">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<article><div class="wrap">
+  <div class="kicker">Running a cluster</div>
+  <h1>Troubleshooting under time pressure</h1>
+  <p class="dek">A fixed order of operations for a broken cluster, so you stop guessing when it matters most.</p>
+  <div class="meta">
+    <span class="m tag">CKA</span><span class="m topic">Observability</span>
+    <span class="m">9 min read</span>
+    <span class="byline">by <a href="https://github.com/Kyle-Law">Kyle Law</a> · 2026-10-08</span>
+  </div>
+  <div class="body">
+      <p>Under pressure people debug by hunch, and hunches are biased towards whatever broke last time. A fixed order is slightly slower on the occasions you guess right, and dramatically faster on average.</p>
+      <h2>The order</h2>
+      <ol><li><strong>Is the pod scheduled?</strong> <code>Pending</code> is a scheduler problem, never an application problem.</li><li><strong>Did the image arrive?</strong> <code>ImagePullBackOff</code> is registry, credentials or a typo.</li><li><strong>Did the process start?</strong> <code>CrashLoopBackOff</code> means it ran and exited &mdash; read the <em>previous</em> logs.</li><li><strong>Is it ready?</strong> Running but receiving no traffic is a probe or a selector.</li><li><strong>Can it reach what it needs?</strong> Now, and only now, is it networking.</li></ol>
+      <p>Each step rules out a whole class of cause. Skipping to step five is how an afternoon disappears into packet captures for what turns out to be a failing readiness probe.</p>
+      <h2>Events before logs, always</h2>
+      <pre><code>kubectl get events -n prod --sort-by=.lastTimestamp | tail -30
+kubectl describe pod my-app-xyz | sed -n &#x27;/Events:/,$p&#x27;</code></pre>
+      <p>Events are where the scheduler and kubelet explain themselves: <code>Insufficient cpu</code>, <code>node(s) had untolerated taint</code>, <code>FailedMount</code>, <code>Liveness probe failed</code>. They answer &ldquo;why is this not running&rdquo; in a way logs never do, because the application never got far enough to log.</p>
+      <div class="gotcha"><b>Events expire, by default after an hour.</b> An empty event list on a pod that has been broken since last night means nothing at all. Check the pod age against the retention window before concluding there is nothing there.</div>
+      <h2>The previous container is the one that failed</h2>
+      <pre><code>kubectl logs my-app-xyz --previous             <span class="c"># the instance that crashed</span>
+kubectl logs my-app-xyz -c sidecar --previous  <span class="c"># and the right container</span>
+kubectl get pod my-app-xyz \
+  -o jsonpath=&#x27;{.status.containerStatuses[*].lastState.terminated.reason}&#x27;</code></pre>
+      <p>In a crash loop, <code>kubectl logs</code> without <code>--previous</code> shows the fresh container that has not failed yet, which is usually empty. That is the most common reason people believe an application logs nothing on failure.</p>
+      <p>Exit codes are worth memorising. <strong>137</strong> is SIGKILL &mdash; almost always an OOM kill or a failed liveness probe. <strong>143</strong> is SIGTERM, a normal shutdown. <strong>1</strong> or <strong>2</strong> is your application failing on its own terms, so read the logs.</p>
+      <h2>Node NotReady: the first five commands</h2>
+      <pre><code>kubectl get nodes -o wide
+kubectl describe node bad-node | sed -n &#x27;/Conditions:/,/Addresses:/p&#x27;
+<span class="c"># then on the node itself</span>
+systemctl status kubelet
+journalctl -u kubelet -n 100 --no-pager
+df -h /var/lib/kubelet &amp;&amp; free -m</code></pre>
+      <p>Node conditions name the problem directly: <code>DiskPressure</code>, <code>MemoryPressure</code>, <code>KubeletNotReady</code>. A full disk on <code>/var/lib/kubelet</code> is the most common cause of a node going NotReady and having its pods evicted, and it is invisible from the cluster side until you look.</p>
+      <h2>Debugging a container with no shell</h2>
+      <pre><code><span class="c"># attach a debug container to a running pod, sharing its namespaces</span>
+kubectl debug -it my-app-xyz --image=nicolaka/netshoot --target=app
+
+<span class="c"># a copy of the pod with the command replaced, when it crashes too fast to exec into</span>
+kubectl debug my-app-xyz -it --copy-to=debug-pod --container=app -- sh</code></pre>
+      <p>Distroless and scratch images have no shell on purpose, which is good for security and awkward at 2am. <code>kubectl debug</code> solves it without rebuilding the image or weakening it.</p>
+      <h2>What to actually do with this</h2>
+      <ul><li>Write the five-step order somewhere you will see it during an incident.</li><li>Practise <code>kubectl debug</code> once, before you need it.</li><li>Check disk on your nodes now. It is the cheapest outage to prevent.</li></ul>
+  </div>
+  <div class="back">
+    <b>This article covers one checkpoint on the roadmap.</b>
+    <a href="https://weteachkubernetes.com/#troubleshoot">Open <strong>Troubleshooting under time pressure</strong> on the roadmap &rarr;</a>
+    — it lists what this depends on and everything else written about it.
+  </div>
+  <p class="fix">Something wrong or out of date?
+    <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=blog%3A%20troubleshooting-under-time-pressure">Open an issue</a> — corrections are
+    welcome and get credited.</p>
+</div></article>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>

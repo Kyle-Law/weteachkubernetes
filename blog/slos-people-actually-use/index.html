@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SLOs people actually use — We Teach Kubernetes</title>
+<meta name="description" content="Three signals per service, one dashboard, and alerts that correspond to someone being paged.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/slos-people-actually-use/">
+<link rel="stylesheet" href="../style.css">
+<meta property="og:title" content="SLOs people actually use">
+<meta property="og:description" content="Three signals per service, one dashboard, and alerts that correspond to someone being paged.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/slos-people-actually-use/">
+<meta property="og:type" content="article">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<article><div class="wrap">
+  <div class="kicker">Platform and scale</div>
+  <h1>SLOs people actually use</h1>
+  <p class="dek">Three signals per service, one dashboard, and alerts that correspond to someone being paged.</p>
+  <div class="meta">
+    <span class="m topic">Observability</span>
+    <span class="m">9 min read</span>
+    <span class="byline">by <a href="https://github.com/Kyle-Law">Kyle Law</a> · 2026-10-08</span>
+  </div>
+  <div class="body">
+      <p>Most Kubernetes monitoring setups collect everything and tell you nothing. The failure is not technical &mdash; it is that nobody decided what "working" means before building the dashboards.</p>
+      <h2>Delete half your alerts first</h2>
+      <p>Before adding anything, go through what fires today and ask one question of each: <em>when this fired, did a human do something?</em> If the honest answer is no, it is not an alert. It is a dashboard panel at best.</p>
+      <p>An alert nobody acts on is worse than no alert, because it trains the team to ignore the channel where the real one will arrive. The strongest predictor of whether monitoring works is not coverage, it is how many pages people trust.</p>
+      <h2>Three signals is enough</h2>
+      <ul><li><strong>Availability</strong> &mdash; the fraction of requests that did not fail.</li><li><strong>Latency</strong> &mdash; the fraction served faster than a threshold you chose deliberately.</li><li><strong>Saturation</strong> &mdash; how close the thing is to a limit, so you have warning before the first two move.</li></ul>
+      <pre><code><span class="c"># availability, as a ratio - not a count of errors</span>
+sum(rate(http_requests_total{status!~&quot;5..&quot;}[5m]))
+  / sum(rate(http_requests_total[5m]))
+
+<span class="c"># latency, as a ratio of requests inside the target</span>
+sum(rate(http_request_duration_seconds_bucket{le=&quot;0.5&quot;}[5m]))
+  / sum(rate(http_request_duration_seconds_count[5m]))</code></pre>
+      <div class="note">Express latency as <strong>"what fraction was fast enough"</strong> rather than as a percentile. Histogram-derived percentiles cannot be averaged or aggregated correctly across instances, and a ratio can. It also matches how you state an objective: 99% of requests under 500&nbsp;ms.</div>
+      <h2>Alert on burn rate, not on breach</h2>
+      <p>A 99.9% monthly objective gives you about 43 minutes of error budget. Alerting the moment you dip below 99.9% in a five-minute window is pure noise. Alerting when you are consuming the budget fast enough to exhaust it is the signal.</p>
+      <pre><code><span class="c"># fast burn: 2% of a 30-day budget in an hour -&gt; page</span>
+- alert: ErrorBudgetBurningFast
+  expr: |
+    (1 - (sum(rate(http_requests_total{status!~&quot;5..&quot;}[1h]))
+          / sum(rate(http_requests_total[1h])))) &gt; 14.4 * 0.001
+  for: 2m
+  labels: { severity: page }
+
+<span class="c"># slow burn: on course to exhaust it this week -&gt; ticket, not a page</span>
+- alert: ErrorBudgetBurningSlow
+  expr: |
+    (1 - (sum(rate(http_requests_total{status!~&quot;5..&quot;}[6h]))
+          / sum(rate(http_requests_total[6h])))) &gt; 6 * 0.001
+  for: 30m
+  labels: { severity: ticket }</code></pre>
+      <p>Two severities, two response paths. The fast burn wakes someone; the slow burn becomes work on Monday. That distinction is what makes an on-call rotation survivable.</p>
+      <h2>Cluster-level alerts worth keeping</h2>
+      <ul><li>A node <code>NotReady</code> for more than five minutes.</li><li>Pods in <code>CrashLoopBackOff</code> for more than fifteen.</li><li>PersistentVolume above 85% full &mdash; with hours of warning, not minutes.</li><li>Certificates expiring within fourteen days.</li><li>A Deployment with fewer ready replicas than its PDB requires.</li></ul>
+      <p>Notably absent: anything about individual pod restarts, CPU above a threshold, or memory above a threshold. Those are symptoms, they fire constantly, and they are what dashboards are for.</p>
+      <h2>Cardinality is how this gets expensive</h2>
+      <div class="gotcha"><b>One label with unbounded values will cost more than the rest of your monitoring combined.</b> A <code>user_id</code>, a request path with an id in it, or a pod name on a high-churn Deployment creates a new time series per value, forever. Normalise paths to route templates before they reach the metric, and keep ids in logs and traces where they belong.</div>
+      <h2>What to actually do with this</h2>
+      <ul><li>List every alert that fired last month and delete the ones nobody acted on.</li><li>Pick one service and write down its three signals and one objective.</li><li>Replace one threshold alert with a burn-rate alert and compare the noise.</li><li>Find your highest-cardinality metric before your bill does.</li></ul>
+  </div>
+  <div class="back">
+    <b>This article covers one checkpoint on the roadmap.</b>
+    <a href="https://weteachkubernetes.com/#slo-observability">Open <strong>SLOs people actually use</strong> on the roadmap &rarr;</a>
+    — it lists what this depends on and everything else written about it.
+  </div>
+  <p class="fix">Something wrong or out of date?
+    <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=blog%3A%20slos-people-actually-use">Open an issue</a> — corrections are
+    welcome and get credited.</p>
+</div></article>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>

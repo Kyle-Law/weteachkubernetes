@@ -1,0 +1,10 @@
+node_modules/
+.wrangler/
+.dev.vars
+.env.deploy
+__pycache__/
+*.pyc
+.DS_Store
+
+# local design explorations: fictional people and placeholder URLs, not for publication
+mockups/

@@ -1,0 +1,17 @@
+name = "weteachkubernetes"
+compatibility_date = "2026-10-08"
+pages_build_output_dir = "public"
+
+# Sessions and per-account progress. Create it once, then paste the id here:
+#   npx wrangler kv namespace create SESSIONS
+#   npx wrangler kv namespace create SESSIONS --preview
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "5a822925a67f4089b293815389c4cf40"
+preview_id = "bb7fee9a5d3a4440941301454637f0ee"
+
+# Non-secret config. Secrets are NOT here - see DEPLOY.md.
+[vars]
+REPO_OWNER = "Kyle-Law"
+REPO_NAME = "weteachkubernetes"
+REPO_BRANCH = "main"

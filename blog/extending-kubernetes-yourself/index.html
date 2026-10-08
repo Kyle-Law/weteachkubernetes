@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Extending Kubernetes yourself — We Teach Kubernetes</title>
+<meta name="description" content="A CRD and controller with controller-runtime &amp;mdash; which is also the shortest honest route to your first upstream contribution.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/extending-kubernetes-yourself/">
+<link rel="stylesheet" href="../style.css">
+<meta property="og:title" content="Extending Kubernetes yourself">
+<meta property="og:description" content="A CRD and controller with controller-runtime &amp;mdash; which is also the shortest honest route to your first upstream contribution.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/extending-kubernetes-yourself/">
+<meta property="og:type" content="article">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<article><div class="wrap">
+  <div class="kicker">Platform and scale</div>
+  <h1>Extending Kubernetes yourself</h1>
+  <p class="dek">A CRD and controller with controller-runtime &amp;mdash; which is also the shortest honest route to your first upstream contribution.</p>
+  <div class="meta">
+    <span class="m topic">Scheduling</span><span class="m topic">GitOps</span>
+    <span class="m">12 min read</span>
+    <span class="byline">by <a href="https://github.com/Kyle-Law">Kyle Law</a> · 2026-10-08</span>
+  </div>
+  <div class="body">
+      <p>Writing a controller changes how you read everything else. Once you have implemented a reconcile loop, the behaviour of every built-in controller becomes predictable, including the parts that look like bugs.</p>
+      <h2>Start with the question of whether you should</h2>
+      <p>An operator is justified when there is <em>operational knowledge</em> to encode &mdash; how to safely upgrade this database, how to fail over, how to resize without data loss. If all you need is "apply this YAML with some values filled in", that is a Helm chart or a Kustomize overlay, and a controller is a daemon you now have to keep alive.</p>
+      <h2>A CRD is a schema plus a status</h2>
+      <pre><code>// api/v1alpha1/types.go
+type CacheSpec struct {
+    // +kubebuilder:validation:Minimum=1
+    // +kubebuilder:validation:Maximum=9
+    Replicas int32 `json:&quot;replicas&quot;`
+
+    // +kubebuilder:validation:Enum=redis;valkey
+    Engine string `json:&quot;engine&quot;`
+}
+
+type CacheStatus struct {
+    ReadyReplicas int32              `json:&quot;readyReplicas&quot;`
+    Conditions    []metav1.Condition `json:&quot;conditions,omitempty&quot;`
+}
+
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name=&quot;Ready&quot;,type=integer,JSONPath=`.status.readyReplicas`</code></pre>
+      <p>Spend the time on validation markers. Every constraint you express in the schema is a class of bad input the API server rejects before your code runs, which means it is a branch you never have to write or test. And always use the <code>status</code> subresource, so updating status cannot conflict with a user editing spec.</p>
+      <h2>The reconcile contract</h2>
+      <pre><code>func (r *CacheReconciler) Reconcile(ctx context.Context,
+    req ctrl.Request) (ctrl.Result, error) {
+
+    var cache v1alpha1.Cache
+    if err := r.Get(ctx, req.NamespacedName, &amp;cache); err != nil {
+        // gone: nothing to do. Never requeue a NotFound.
+        return ctrl.Result{}, client.IgnoreNotFound(err)
+    }
+
+    desired := statefulSetFor(&amp;cache)
+    if err := ctrl.SetControllerReference(&amp;cache, desired, r.Scheme); err != nil {
+        return ctrl.Result{}, err
+    }
+
+    // create-or-update, because this will run many times
+    if err := r.Patch(ctx, desired, client.Apply,
+        client.ForceOwnership, client.FieldOwner(&quot;cache-operator&quot;)); err != nil {
+        return ctrl.Result{}, err
+    }
+
+    cache.Status.ReadyReplicas = readyOf(ctx, r, &amp;cache)
+    return ctrl.Result{}, r.Status().Update(ctx, &amp;cache)
+}</code></pre>
+      <ul><li><strong>Idempotent, always.</strong> Reconcile will be called repeatedly for the same object, with no relationship to how many times it changed.</li><li><strong>Level-triggered, not edge-triggered.</strong> You get "something about this object may have changed", never a diff. Read the world; do not infer it.</li><li><strong>Return an error to retry.</strong> controller-runtime backs off exponentially. Do not sleep inside a reconcile.</li><li><strong>Set owner references.</strong> That is what makes deletion clean up after itself.</li></ul>
+      <div class="note">Use <strong>server-side apply</strong> with a field owner rather than get-modify-update. It makes your controller declare only the fields it owns, so it stops fighting with other controllers, an HPA, or a human editing a different part of the same object. This is the single biggest improvement available to most hand-written controllers.</div>
+      <h2>Finalizers, and how to not wedge a namespace</h2>
+      <div class="gotcha"><b>A finalizer with a bug makes an object undeletable forever, and a namespace containing it will hang in <code>Terminating</code> permanently.</b> If your cleanup cannot succeed &mdash; the external resource is already gone, credentials have rotated &mdash; you must still remove the finalizer. Treat "cleanup failed permanently" as a case to log and release, not to retry forever.</div>
+      <h2>Why this is the contribution route</h2>
+      <p>Having written a controller, you can read any Kubernetes controller, and reading them is how you find real work to do. The path that actually leads somewhere:</p>
+      <ol><li>Build something small with Kubebuilder. A week, and you will understand informers, work queues and caches properly.</li><li>Pick one SIG whose area you now know &mdash; whichever matches the controller you just wrote.</li><li>Start with tests and documentation. Unglamorous, genuinely needed, and the fastest way to learn a review process without a hard review.</li><li>Then fix a real bug, having read the code around it rather than only the issue.</li></ol>
+      <p>The useful thing about this order is that each step produces something, whether or not the next one happens. A small operator with users is evidence on its own; so is a merged documentation fix.</p>
+      <h2>What to actually do with this</h2>
+      <ul><li>Scaffold a CRD with Kubebuilder and reconcile it into a ConfigMap. One afternoon.</li><li>Convert one get-modify-update to server-side apply and watch the conflicts stop.</li><li>Read the ReplicaSet controller in kubernetes/kubernetes. It is shorter than you expect, and it is the pattern everything else copies.</li></ul>
+  </div>
+  <div class="back">
+    <b>This article covers one checkpoint on the roadmap.</b>
+    <a href="https://weteachkubernetes.com/#extend-k8s">Open <strong>Extending Kubernetes yourself</strong> on the roadmap &rarr;</a>
+    — it lists what this depends on and everything else written about it.
+  </div>
+  <p class="fix">Something wrong or out of date?
+    <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=blog%3A%20extending-kubernetes-yourself">Open an issue</a> — corrections are
+    welcome and get credited.</p>
+</div></article>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>

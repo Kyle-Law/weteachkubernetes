@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RBAC and multi-tenancy — We Teach Kubernetes</title>
+<meta name="description" content="Roles that are actually least-privilege, and the three places tenancy leaks anyway.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/rbac-and-multi-tenancy/">
+<link rel="stylesheet" href="../style.css">
+<meta property="og:title" content="RBAC and multi-tenancy">
+<meta property="og:description" content="Roles that are actually least-privilege, and the three places tenancy leaks anyway.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/rbac-and-multi-tenancy/">
+<meta property="og:type" content="article">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<article><div class="wrap">
+  <div class="kicker">Running a cluster</div>
+  <h1>RBAC and multi-tenancy</h1>
+  <p class="dek">Roles that are actually least-privilege, and the three places tenancy leaks anyway.</p>
+  <div class="meta">
+    <span class="m tag">CKA</span><span class="m topic">Security</span><span class="m tag">KCSA</span>
+    <span class="m">10 min read</span>
+    <span class="byline">by <a href="https://github.com/Kyle-Law">Kyle Law</a> · 2026-10-08</span>
+  </div>
+  <div class="body">
+      <p>RBAC is four object types and one rule: permissions are purely additive, and there is no deny. What a subject can do is the union of every binding that mentions it, which means you can never fix an over-permissive grant by adding a narrower one.</p>
+      <h2>Four objects, two scopes</h2>
+      <ul><li><strong>Role</strong> &mdash; permissions, inside one namespace.</li><li><strong>ClusterRole</strong> &mdash; permissions, cluster-wide or reusable.</li><li><strong>RoleBinding</strong> &mdash; grants a Role <em>or a ClusterRole</em> inside one namespace.</li><li><strong>ClusterRoleBinding</strong> &mdash; grants a ClusterRole everywhere.</li></ul>
+      <div class="note">The combination people miss: a <strong>RoleBinding referencing a ClusterRole</strong>. That is how you define &ldquo;developer&rdquo; once and grant it in thirty namespaces without thirty copies of the rules. The single most useful pattern in RBAC.</div>
+      <h2>Ask the API rather than reading YAML</h2>
+      <pre><code>kubectl auth can-i --list --as=system:serviceaccount:team-a:deployer -n team-a
+kubectl auth can-i delete pods --as=jane -n prod
+kubectl auth can-i &#x27;*&#x27; &#x27;*&#x27; --as=system:serviceaccount:team-a:deployer   <span class="c"># the scary one</span></code></pre>
+      <p>Reviewing bindings by eye does not work at any real scale, because the answer depends on role aggregation and on bindings in other namespaces. <code>can-i --list</code> gives you the effective answer, which is the only one that matters.</p>
+      <h2>The escalation paths that are not obvious</h2>
+      <ul><li><code>create pods</code> in a namespace means you can mount any Secret in that namespace and run as any ServiceAccount in it. It is effectively read access to every credential there.</li><li><code>create pods/exec</code> is a shell in a running container, bypassing whatever the image entrypoint was.</li><li><code>escalate</code> or <code>bind</code> on roles lets a subject grant itself permissions it does not have. RBAC normally prevents privilege escalation; these verbs are the exemption.</li><li><code>get secrets</code> cluster-wide is usually equivalent to cluster-admin in practice, because one of those secrets is a token for something that is.</li></ul>
+      <div class="gotcha"><b>Namespaces are not a security boundary on their own.</b> They scope names and RBAC, and nothing else. By default a pod in one namespace can reach a pod in another over the network, both can exhaust the same node, and both see the same cluster-scoped objects. Real tenancy needs network policy, quotas and admission control on top.</div>
+      <h2>Three leaks to close</h2>
+      <ol><li><strong>Network.</strong> Without NetworkPolicy, every pod can reach every pod. A default-deny policy per namespace is the first real wall.</li><li><strong>Resources.</strong> Without a ResourceQuota and LimitRange, one tenant can take a whole node. Noisy-neighbour problems are tenancy problems.</li><li><strong>Node and kernel.</strong> Pods share a kernel. A privileged container, a hostPath mount or <code>hostNetwork</code> escapes the namespace entirely &mdash; which is what Pod Security Admission is for.</li></ol>
+      <pre><code><span class="c"># the baseline worth having in every tenant namespace</span>
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-a
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/warn: restricted</code></pre>
+      <h2>Default ServiceAccount tokens</h2>
+      <p>Every pod gets a ServiceAccount token mounted unless you say otherwise. Most workloads never call the API, so that token is pure downside &mdash; it is the first thing anything inside a compromised container goes looking for.</p>
+      <pre><code>spec:
+  automountServiceAccountToken: false     <span class="c"># on the pod, or on the ServiceAccount</span></code></pre>
+      <h2>What to actually do with this</h2>
+      <ul><li>Run <code>can-i --list</code> for your most-used ServiceAccount. Expect a surprise.</li><li>Find every binding of <code>cluster-admin</code> and justify each one out loud.</li><li>Turn off token automounting on one workload that does not need it, and watch nothing break.</li></ul>
+  </div>
+  <div class="back">
+    <b>This article covers one checkpoint on the roadmap.</b>
+    <a href="https://weteachkubernetes.com/#rbac-tenancy">Open <strong>RBAC and multi-tenancy</strong> on the roadmap &rarr;</a>
+    — it lists what this depends on and everything else written about it.
+  </div>
+  <p class="fix">Something wrong or out of date?
+    <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=blog%3A%20rbac-and-multi-tenancy">Open an issue</a> — corrections are
+    welcome and get credited.</p>
+</div></article>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>

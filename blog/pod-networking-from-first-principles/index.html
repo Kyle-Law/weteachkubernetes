@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pod networking from first principles — We Teach Kubernetes</title>
+<meta name="description" content="Follow a packet from one pod to another across nodes, then do it again with the CNI removed so you can see what it was doing for you.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/pod-networking-from-first-principles/">
+<link rel="stylesheet" href="../style.css">
+<meta property="og:title" content="Pod networking from first principles">
+<meta property="og:description" content="Follow a packet from one pod to another across nodes, then do it again with the CNI removed so you can see what it was doing for you.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/pod-networking-from-first-principles/">
+<meta property="og:type" content="article">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<article><div class="wrap">
+  <div class="kicker">Networking</div>
+  <h1>Pod networking from first principles</h1>
+  <p class="dek">Follow a packet from one pod to another across nodes, then do it again with the CNI removed so you can see what it was doing for you.</p>
+  <div class="meta">
+    <span class="m tag">CKNE</span><span class="m topic">Networking</span><span class="m tag">CKA</span>
+    <span class="m">12 min read</span>
+    <span class="byline">by <a href="https://github.com/Kyle-Law">Kyle Law</a> · 2026-10-08</span>
+  </div>
+  <div class="body">
+      <p>Kubernetes networking has exactly three rules. Everything else is an implementation detail of satisfying them:</p>
+      <ol><li>Every pod gets its own IP address.</li><li>Pods can reach each other at those addresses, without NAT.</li><li>Agents on a node can reach all pods on that node.</li></ol>
+      <p>That is the whole contract. It feels complicated because nothing in Linux provides it, so a CNI plugin has to build it on every node, and the plugins do it differently.</p>
+      <h2>Inside a node: veth pairs</h2>
+      <p>A pod is a network namespace. To give it connectivity the plugin creates a virtual ethernet pair &mdash; a cable with two ends &mdash; puts one end inside the namespace as <code>eth0</code>, and leaves the other on the host.</p>
+      <pre><code><span class="c"># find the pod&#x27;s interface index from inside the pod</span>
+kubectl exec my-pod -- cat /sys/class/net/eth0/iflink
+<span class="c"># then match that index on the node</span>
+ip link | grep &quot;^&lt;index&gt;:&quot;
+
+<span class="c"># the host side of every pod on this node</span>
+ip -d link show type veth</code></pre>
+      <p>The pod routing table is deliberately almost empty: a default route pointing at the host side of the pair. Every real decision is made on the node, not in the pod.</p>
+      <h2>Between nodes: overlay or routed</h2>
+      <ul><li><strong>Overlay</strong> (VXLAN, Geneve) wraps the pod packet inside a node-to-node packet. Works on any network, costs you MTU and a little CPU.</li><li><strong>Routed</strong> (BGP, or a cloud route table) tells the underlying network where each node pod CIDR lives, so pod packets travel unmodified. Faster and easier to debug, but the network has to cooperate.</li></ul>
+      <div class="gotcha"><b>MTU is the silent killer in overlay mode.</b> VXLAN adds 50 bytes of headers. If the pod MTU is still 1500 on a 1500-byte underlay, large packets need fragmenting, and if ICMP is filtered anywhere you get the classic symptom: small requests work, TLS handshakes and large responses hang forever. Run <code>kubectl exec pod -- ip link show eth0</code> and expect 1450, not 1500.</div>
+      <h2>Services are not processes</h2>
+      <p>A ClusterIP does not exist anywhere. No process listens on it. It is a rule on every node that rewrites the destination of outgoing packets to one of the backing pod IPs:</p>
+      <pre><code><span class="c"># iptables mode - the classic</span>
+sudo iptables -t nat -L KUBE-SERVICES -n | grep my-svc
+
+<span class="c"># IPVS mode - a real load balancer table</span>
+sudo ipvsadm -Ln
+
+<span class="c"># what the Service actually resolves to</span>
+kubectl get endpointslices -l kubernetes.io/service-name=my-svc -o yaml</code></pre>
+      <p>The modes differ only in how that rewriting is implemented. <strong>iptables</strong> builds a chain per service and scales linearly, which starts hurting in the thousands. <strong>IPVS</strong> uses a kernel hash table and stays flat. <strong>eBPF</strong> replaces the chains with programs attached to the socket and the interface, and can skip much of the network stack for pods on the same node.</p>
+      <h2>DNS is the usual suspect</h2>
+      <pre><code>kubectl exec -it my-pod -- cat /etc/resolv.conf
+<span class="c"># nameserver 10.96.0.10</span>
+<span class="c"># search team-a.svc.cluster.local svc.cluster.local cluster.local</span>
+<span class="c"># options ndots:5</span></code></pre>
+      <p><code>ndots:5</code> means any name with fewer than five dots is tried against every search domain first. A lookup of <code>api.example.com</code> &mdash; two dots &mdash; generates four failing queries before the correct one. Harmless until DNS is under load, at which point it is four times the load you think you have. A trailing dot (<code>api.example.com.</code>) skips the search list entirely.</p>
+      <h2>What to actually do with this</h2>
+      <ul><li>Find the veth pair for one of your pods, on the node. Two commands, and the model stops being abstract.</li><li>Check your pod MTU. If it is 1500 on an overlay, you have a latent bug.</li><li>Dump the iptables NAT table or run <code>ipvsadm -Ln</code> once, so a Service stops being magic.</li></ul>
+  </div>
+  <div class="back">
+    <b>This article covers one checkpoint on the roadmap.</b>
+    <a href="https://weteachkubernetes.com/#pod-networking">Open <strong>Pod networking from first principles</strong> on the roadmap &rarr;</a>
+    — it lists what this depends on and everything else written about it.
+  </div>
+  <p class="fix">Something wrong or out of date?
+    <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=blog%3A%20pod-networking-from-first-principles">Open an issue</a> — corrections are
+    welcome and get credited.</p>
+</div></article>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>

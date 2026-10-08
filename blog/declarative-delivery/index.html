@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Declarative delivery — We Teach Kubernetes</title>
+<meta name="description" content="Kustomize overlays and a pull-based reconciler, so environments stop drifting silently and a cluster can be rebuilt from Git alone.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/declarative-delivery/">
+<link rel="stylesheet" href="../style.css">
+<meta property="og:title" content="Declarative delivery">
+<meta property="og:description" content="Kustomize overlays and a pull-based reconciler, so environments stop drifting silently and a cluster can be rebuilt from Git alone.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/declarative-delivery/">
+<meta property="og:type" content="article">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<article><div class="wrap">
+  <div class="kicker">Workloads and configuration</div>
+  <h1>Declarative delivery</h1>
+  <p class="dek">Kustomize overlays and a pull-based reconciler, so environments stop drifting silently and a cluster can be rebuilt from Git alone.</p>
+  <div class="meta">
+    <span class="m topic">GitOps</span><span class="m tag">CKAD</span>
+    <span class="m">9 min read</span>
+    <span class="byline">by <a href="https://github.com/Kyle-Law">Kyle Law</a> · 2026-10-08</span>
+  </div>
+  <div class="body">
+      <p>The test of a delivery setup is not how fast it deploys. It is whether you can delete the cluster and get it back. If the answer involves anyone remembering anything, the answer is no.</p>
+      <h2>Push and pull are different trust models</h2>
+      <p>A push pipeline holds cluster credentials in CI and runs <code>kubectl apply</code>. A pull reconciler runs <em>inside</em> the cluster, watches Git, and applies what it finds. The second is usually better, for a reason that has nothing to do with features: CI never needs cluster credentials, so a compromised CI runner cannot reach production.</p>
+      <p>Pull also fixes drift. Something edited by hand at 3am gets reverted on the next reconcile, and you find out, instead of discovering months later that prod does not match the manifests.</p>
+      <h2>Kustomize: patch, do not template</h2>
+      <p>Kustomize keeps one real set of manifests and expresses each environment as a patch over it. The base is valid YAML you can apply directly, which makes it reviewable.</p>
+      <pre><code><span class="c"># base/kustomization.yaml</span>
+resources:
+  - deployment.yaml
+  - service.yaml
+
+<span class="c"># overlays/prod/kustomization.yaml</span>
+resources:
+  - ../../base
+replicas:
+  - name: my-app
+    count: 6
+patches:
+  - path: resources.yaml       <span class="c"># prod gets bigger requests</span>
+    target: { kind: Deployment, name: my-app }
+images:
+  - name: my-app
+    newTag: v1.4.2</code></pre>
+      <pre><code><span class="c"># always read the output before trusting it</span>
+kubectl kustomize overlays/prod | less
+kubectl diff -k overlays/prod                  <span class="c"># what would change, against the live cluster</span></code></pre>
+      <div class="note"><b><code>kubectl diff -k</code> is the most underused command in this area.</b> It shows exactly what a merge would do to the live cluster, which turns "I think this is safe" into something you can paste into a pull request.</div>
+      <h2>Helm or Kustomize: pick by failure mode</h2>
+      <ul><li><strong>Helm</strong> when you are consuming somebody else&rsquo;s software. You want their upgrade path, their values schema, their defaults.</li><li><strong>Kustomize</strong> when the manifests are yours. Patches stay readable; templated YAML stops being YAML and starts being a string-concatenation program.</li><li><strong>Both</strong> is normal and fine: render the upstream chart, then patch the result.</li></ul>
+      <h2>App-of-apps, and why bootstrap order matters</h2>
+      <p>Put one root application in Git that points at everything else. Recovering the cluster becomes: install the reconciler, apply the root, wait.</p>
+      <pre><code><span class="c"># the only thing you ever apply by hand</span>
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata: { name: root, namespace: argocd }
+spec:
+  source:
+    repoURL: https://github.com/you/platform
+    path: apps                  <span class="c"># a directory of Application manifests</span>
+  destination: { server: https://kubernetes.default.svc }
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }</code></pre>
+      <div class="gotcha"><b>Turn on <code>prune</code> deliberately and late.</b> Without it, deleting a file from Git leaves the object running forever, and your repo quietly stops describing reality. With it, a bad path or a mistaken refactor can delete real workloads. Enable it once you trust the repo layout, not on day one.</div>
+      <p>Order is the other bootstrap trap: CRDs must exist before the resources that use them, and namespaces before the things inside them. Sync waves — or Flux dependencies — exist for exactly this, and you will need them the first time you rebuild from scratch.</p>
+      <h2>What to actually do with this</h2>
+      <ul><li>Run <code>kubectl diff -k</code> against production once. Whatever it prints is your current drift.</li><li>Move one service to an overlay structure and delete its duplicated YAML.</li><li>Write down the bootstrap order for your cluster. If you cannot, that is the finding.</li></ul>
+  </div>
+  <div class="back">
+    <b>This article covers one checkpoint on the roadmap.</b>
+    <a href="https://weteachkubernetes.com/#gitops-delivery">Open <strong>Declarative delivery</strong> on the roadmap &rarr;</a>
+    — it lists what this depends on and everything else written about it.
+  </div>
+  <p class="fix">Something wrong or out of date?
+    <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=blog%3A%20declarative-delivery">Open an issue</a> — corrections are
+    welcome and get credited.</p>
+</div></article>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>

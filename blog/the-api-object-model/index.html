@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The API object model — We Teach Kubernetes</title>
+<meta name="description" content="Why everything is a resource, what the control loop actually does, and how to read any CRD you meet later without waiting for someone to document it.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/the-api-object-model/">
+<link rel="stylesheet" href="../style.css">
+<meta property="og:title" content="The API object model">
+<meta property="og:description" content="Why everything is a resource, what the control loop actually does, and how to read any CRD you meet later without waiting for someone to document it.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/the-api-object-model/">
+<meta property="og:type" content="article">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<article><div class="wrap">
+  <div class="kicker">Foundations</div>
+  <h1>The API object model</h1>
+  <p class="dek">Why everything is a resource, what the control loop actually does, and how to read any CRD you meet later without waiting for someone to document it.</p>
+  <div class="meta">
+    <span class="m tag">KCNA</span><span class="m tag">CKAD</span>
+    <span class="m">9 min read</span>
+    <span class="byline">by <a href="https://github.com/Kyle-Law">Kyle Law</a> · 2026-10-08</span>
+  </div>
+  <div class="body">
+      <p>Kubernetes has one idea in it, repeated. You write down what you want, a controller compares that to what exists, and it acts to close the gap. Learn the shape of that loop and every new resource you meet — from a Deployment to a CiliumNetworkPolicy to something your colleague invented last week — is recognisable on sight.</p>
+      <h2>Spec is a wish. Status is a measurement.</h2>
+      <p>Nearly every object has the same four parts: <code>apiVersion</code> and <code>kind</code> to say what it is, <code>metadata</code> to name it, <code>spec</code> for what you want, and <code>status</code> for what is true. You write spec. Controllers write status. Confusing the two is the most common beginner mistake, and the reason editing status by hand does nothing useful.</p>
+      <pre><code>kubectl get deploy my-app -o jsonpath=&#x27;{.spec.replicas}&#x27;       <span class="c"># what you asked for</span>
+kubectl get deploy my-app -o jsonpath=&#x27;{.status.readyReplicas}&#x27;  <span class="c"># what you have</span></code></pre>
+      <h2>The loop, in one paragraph</h2>
+      <p>A controller watches a resource type. When one changes, it is put on a work queue. The controller reads the current world, computes the difference from spec, and takes one step towards closing it — then it does that again, forever. It must be safe to run the same reconcile twice, because it will be. Nothing in the system assumes a message is delivered exactly once.</p>
+      <p>This is why Kubernetes recovers from almost anything you do to it, and also why it sometimes does nothing at all and gives you no error: the controller may simply not be watching the thing you changed.</p>
+      <h2>Read the API, not the blog post</h2>
+      <p>The cluster documents itself, including every CRD installed on it. Three commands cover most of what you would otherwise go searching for:</p>
+      <pre><code>kubectl api-resources                    <span class="c"># everything this cluster knows about</span>
+kubectl explain deployment.spec.strategy --recursive
+kubectl get crd                          <span class="c"># what has been added beyond core Kubernetes</span></code></pre>
+      <div class="note"><b>This is the single most useful habit on the list.</b> <code>kubectl explain</code> reads the OpenAPI schema out of the API server, so it is correct for <em>your</em> cluster at <em>your</em> version, which a search result is not. It also works on custom resources the moment someone installs them.</div>
+      <h2>Ownership is how deletion works</h2>
+      <p>A Deployment does not manage pods. It manages a ReplicaSet, which manages pods, and each child carries an <code>ownerReferences</code> entry pointing at its parent. Delete the parent and garbage collection removes the children.</p>
+      <pre><code>kubectl get rs -l app=my-app -o jsonpath=&#x27;{.items[*].metadata.ownerReferences[*].kind}&#x27;
+
+<span class="c"># orphan the children instead of deleting them - occasionally what you want in an incident</span>
+kubectl delete deploy my-app --cascade=orphan</code></pre>
+      <h2>Labels do the wiring</h2>
+      <p>There are no pointers in a Kubernetes manifest. A Service finds pods because its <code>selector</code> matches their labels, and nothing validates that the match succeeds. A Service with a typo in its selector is a perfectly valid object with zero endpoints.</p>
+      <pre><code><span class="c"># the real question when a Service returns nothing</span>
+kubectl get endpointslices -l kubernetes.io/service-name=my-svc</code></pre>
+      <div class="gotcha"><b>An empty EndpointSlice means the selector matched nothing, or nothing matched is ready.</b> Those two causes look identical from the Service and are fixed in completely different places — one is a label typo, the other is a failing readiness probe. Check the pods before you touch the Service.</div>
+      <h2>What to actually do with this</h2>
+      <ul><li>Pick any resource in your cluster and read its <code>status</code> alongside its <code>spec</code>. Notice which fields you never wrote.</li><li>Run <code>kubectl explain</code> on something you thought you knew — <code>pod.spec.securityContext</code> is a good one.</li><li>Break a Service selector on purpose and follow it down to the EndpointSlice.</li></ul>
+  </div>
+  <div class="back">
+    <b>This article covers one checkpoint on the roadmap.</b>
+    <a href="https://weteachkubernetes.com/#object-model">Open <strong>The API object model</strong> on the roadmap &rarr;</a>
+    — it lists what this depends on and everything else written about it.
+  </div>
+  <p class="fix">Something wrong or out of date?
+    <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=blog%3A%20the-api-object-model">Open an issue</a> — corrections are
+    welcome and get credited.</p>
+</div></article>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>

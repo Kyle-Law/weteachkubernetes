@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Getting a GPU into a pod — We Teach Kubernetes</title>
+<meta name="description" content="The device plugin model, drivers, and the difference between MIG and time-slicing when cost is the constraint.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/getting-a-gpu-into-a-pod/">
+<link rel="stylesheet" href="../style.css">
+<meta property="og:title" content="Getting a GPU into a pod">
+<meta property="og:description" content="The device plugin model, drivers, and the difference between MIG and time-slicing when cost is the constraint.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/getting-a-gpu-into-a-pod/">
+<meta property="og:type" content="article">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<article><div class="wrap">
+  <div class="kicker">AI inference and GPUs</div>
+  <h1>Getting a GPU into a pod</h1>
+  <p class="dek">The device plugin model, drivers, and the difference between MIG and time-slicing when cost is the constraint.</p>
+  <div class="meta">
+    <span class="m topic">Inference</span><span class="m topic">Scheduling</span>
+    <span class="m">11 min read</span>
+    <span class="byline">by <a href="https://github.com/Kyle-Law">Kyle Law</a> · 2026-10-08</span>
+  </div>
+  <div class="body">
+      <p>No certification covers this, which is exactly why it is worth writing down. The mechanics are not hard; the failure modes are just unfamiliar, and every layer fails silently in its own way.</p>
+      <h2>GPUs are not like CPU and memory</h2>
+      <p>CPU and memory are compressible, divisible, and known to the kubelet natively. A GPU is an <em>extended resource</em>: an opaque integer advertised by a device plugin, which cannot be fractional and cannot be overcommitted.</p>
+      <pre><code>resources:
+  limits:
+    nvidia.com/gpu: 1        <span class="c"># requests is implied and must equal limits</span>
+
+<span class="c"># what the node claims to have</span>
+kubectl get nodes -o custom-columns=\
+  &#x27;NODE:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu&#x27;</code></pre>
+      <p>If that column is empty or zero, no pod requesting a GPU will ever schedule, and the only symptom is <code>Pending</code>. Nothing tells you the plugin is unhealthy; the resource simply does not exist.</p>
+      <h2>Six layers, and the error is always in one of them</h2>
+      <ol><li><strong>Hardware</strong> &mdash; the card is present. <code>lspci | grep -i nvidia</code>.</li><li><strong>Kernel driver</strong> &mdash; loaded and matching. <code>nvidia-smi</code> on the node.</li><li><strong>Container runtime</strong> &mdash; configured to inject devices, usually the NVIDIA container toolkit.</li><li><strong>Device plugin</strong> &mdash; a DaemonSet advertising the resource to the kubelet.</li><li><strong>Node labels</strong> &mdash; so you can target specific hardware.</li><li><strong>The pod spec</strong> &mdash; requesting the resource at all.</li></ol>
+      <pre><code><span class="c"># the debugging order, top down</span>
+kubectl get ds -n gpu-operator                        <span class="c"># plugin running?</span>
+kubectl logs -n gpu-operator ds/nvidia-device-plugin-daemonset --tail=50
+kubectl describe node gpu-node-1 | grep -A5 Allocatable
+kubectl run smi --rm -it --restart=Never \
+  --image=nvidia/cuda:12.4.0-base-ubuntu22.04 \
+  --overrides=&#x27;{&quot;spec&quot;:{&quot;containers&quot;:[{&quot;name&quot;:&quot;smi&quot;,&quot;image&quot;:&quot;nvidia/cuda:12.4.0-base-ubuntu22.04&quot;,&quot;command&quot;:[&quot;nvidia-smi&quot;],&quot;resources&quot;:{&quot;limits&quot;:{&quot;nvidia.com/gpu&quot;:1}}}]}}&#x27;</code></pre>
+      <div class="note">Use the <strong>GPU Operator</strong> rather than assembling layers two to five by hand. It manages drivers, the toolkit, the device plugin, Node Feature Discovery and DCGM metrics as one unit, and it handles the thing that is genuinely painful manually: driver upgrades across a fleet without a cordon-and-reboot script of your own.</div>
+      <h2>Sharing one GPU: two mechanisms, different guarantees</h2>
+      <ul><li><strong>Time-slicing</strong> &mdash; the GPU context-switches between processes. Memory is <em>not</em> partitioned: every process sees the whole card and they can collectively exhaust it. No isolation, works on any GPU, zero reconfiguration.</li><li><strong>MIG</strong> (Multi-Instance GPU) &mdash; the hardware is partitioned into instances with dedicated memory, cache and compute. Real isolation, enforced by the card. Only on A100/H100-class hardware, and the partition layout is fixed until you reconfigure the device.</li></ul>
+      <div class="gotcha"><b>Time-slicing plus an untuned inference server is an OOM factory.</b> Frameworks like vLLM pre-allocate a large fraction of visible GPU memory by default. Two time-sliced replicas each try to reserve 90% of the same card, and the second one dies &mdash; or worse, both survive startup and one dies later under load. If you time-slice, you must cap memory per process in the application (<code>--gpu-memory-utilization</code> for vLLM) because Kubernetes cannot do it for you.</div>
+      <pre><code><span class="c"># time-slicing: four virtual GPUs from one physical card</span>
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: device-plugin-config
+data:
+  config.yaml: |
+    sharing:
+      timeSlicing:
+        resources:
+          - name: nvidia.com/gpu
+            replicas: 4
+
+<span class="c"># MIG: request a specific profile instead</span>
+<span class="c"># resources:</span>
+<span class="c">#   limits:</span>
+<span class="c">#     nvidia.com/mig-1g.10gb: 1</span></code></pre>
+      <h2>Choosing between them</h2>
+      <ul><li><strong>Many small, bursty, trusted workloads</strong> &mdash; notebooks, batch inference, development &mdash; time-slicing, with application memory caps.</li><li><strong>Multiple tenants, or anything with a latency target</strong> &mdash; MIG. A noisy neighbour on a time-sliced GPU can make your p99 unrecognisable.</li><li><strong>Training</strong> &mdash; neither. Give the job whole GPUs.</li></ul>
+      <h2>What to actually do with this</h2>
+      <ul><li>Run the six-layer check on a working GPU node so you know what healthy looks like.</li><li>Confirm whether your cards support MIG before designing around it.</li><li>If you time-slice, set a memory cap in the application today.</li></ul>
+  </div>
+  <div class="back">
+    <b>This article covers one checkpoint on the roadmap.</b>
+    <a href="https://weteachkubernetes.com/#gpu-scheduling">Open <strong>Getting a GPU into a pod</strong> on the roadmap &rarr;</a>
+    — it lists what this depends on and everything else written about it.
+  </div>
+  <p class="fix">Something wrong or out of date?
+    <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=blog%3A%20getting-a-gpu-into-a-pod">Open an issue</a> — corrections are
+    welcome and get credited.</p>
+</div></article>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>

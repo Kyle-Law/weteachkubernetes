@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Deployments, probes and rollouts — We Teach Kubernetes</title>
+<meta name="description" content="Rolling updates that do not drop traffic, and the three probes people keep confusing.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/deployments-probes-and-rollouts/">
+<link rel="stylesheet" href="../style.css">
+<meta property="og:title" content="Deployments, probes and rollouts">
+<meta property="og:description" content="Rolling updates that do not drop traffic, and the three probes people keep confusing.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/deployments-probes-and-rollouts/">
+<meta property="og:type" content="article">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<article><div class="wrap">
+  <div class="kicker">Workloads and configuration</div>
+  <h1>Deployments, probes and rollouts</h1>
+  <p class="dek">Rolling updates that do not drop traffic, and the three probes people keep confusing.</p>
+  <div class="meta">
+    <span class="m tag">CKAD</span><span class="m tag">CKA</span>
+    <span class="m">10 min read</span>
+    <span class="byline">by <a href="https://github.com/Kyle-Law">Kyle Law</a> · 2026-10-08</span>
+  </div>
+  <div class="body">
+      <p>A rolling update is the most routine thing a cluster does and the most common source of self-inflicted downtime. The default settings are reasonable; they are just not the settings most applications need, and the gap shows up only under real traffic.</p>
+      <h2>Three probes, three different jobs</h2>
+      <ul><li><strong>startupProbe</strong> — "has it finished booting?" While this is failing, the other two are not run at all.</li><li><strong>readinessProbe</strong> — "should it receive traffic?" Failing removes the pod from Service endpoints. It does not restart anything.</li><li><strong>livenessProbe</strong> — "is it wedged?" Failing <em>kills the container</em>.</li></ul>
+      <div class="gotcha"><b>The classic outage: using a slow livenessProbe as a startup check.</b> An application that takes 90 seconds to warm up, with a livenessProbe that starts checking at 30 seconds, will be killed and restarted forever — and it will never once report an error, because it never got to finish starting. That is what <code>startupProbe</code> exists for.</div>
+      <pre><code>startupProbe:                 <span class="c"># generous: booting is allowed to be slow</span>
+  httpGet: { path: /healthz, port: 8080 }
+  failureThreshold: 30
+  periodSeconds: 5             <span class="c"># up to 150s to start, checked every 5s</span>
+
+readinessProbe:               <span class="c"># strict: reflects whether dependencies are usable</span>
+  httpGet: { path: /ready, port: 8080 }
+  periodSeconds: 5
+
+livenessProbe:                <span class="c"># conservative: only true deadlock should trip this</span>
+  httpGet: { path: /healthz, port: 8080 }
+  periodSeconds: 10
+  failureThreshold: 6</code></pre>
+      <p>A useful rule: <code>/ready</code> may check the database, the cache, the thing you cannot work without. <code>/healthz</code> must check nothing external. If liveness depends on your database, a database blip restarts every pod you own at once, which turns a brief degradation into a cold-start stampede.</p>
+      <h2>maxUnavailable is the dial that matters</h2>
+      <pre><code>spec:
+  replicas: 6
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0        <span class="c"># never go below 6 serving pods</span>
+      maxSurge: 2              <span class="c"># briefly run up to 8</span></code></pre>
+      <p>The default is 25% of each. With <code>maxUnavailable: 25%</code> and four replicas you are deliberately running on three during every deploy, which is fine until the deploy coincides with a traffic peak. Setting it to <code>0</code> with some surge costs you a little headroom and removes a whole category of deploy-time incidents.</p>
+      <h2>Termination is not instant, and the gap bites</h2>
+      <p>When a pod is deleted, two things happen at the same time: the kubelet sends <code>SIGTERM</code>, and the endpoint controller starts removing it from Services. Those are not synchronised. For a second or two, a pod that is already shutting down is still receiving new connections.</p>
+      <pre><code>lifecycle:
+  preStop:
+    exec:
+      command: [&quot;sleep&quot;, &quot;5&quot;]   <span class="c"># keep serving while endpoints propagate</span>
+terminationGracePeriodSeconds: 30</code></pre>
+      <p>A <code>preStop</code> sleep looks crude and is the standard fix. The pod stays up and keeps serving for a few seconds after it is marked for deletion, by which time the proxies have stopped sending it work. Then your application gets its <code>SIGTERM</code> and can drain cleanly.</p>
+      <h2>Watching a rollout properly</h2>
+      <pre><code>kubectl rollout status deploy/my-app --timeout=120s
+kubectl rollout history deploy/my-app
+kubectl rollout undo deploy/my-app --to-revision=3
+
+<span class="c"># why is it stuck? the Deployment tells you, in conditions</span>
+kubectl get deploy my-app -o jsonpath=&#x27;{.status.conditions[*].message}{&quot;\n&quot;}&#x27; </code></pre>
+      <p>A stalled rollout usually reports <code>ProgressDeadlineExceeded</code>, which means new pods never became ready within 10 minutes. The Deployment is not the thing to debug at that point — the new pod is.</p>
+      <h2>What to actually do with this</h2>
+      <ul><li>Set <code>maxUnavailable: 0</code> on anything that serves users.</li><li>Add a <code>startupProbe</code> to anything slow, and make the liveness check depend on nothing external.</li><li>Add a five-second <code>preStop</code> sleep and watch your deploy-time error rate change.</li><li>Break a rollout on purpose, then read <code>.status.conditions</code> rather than guessing.</li></ul>
+  </div>
+  <div class="back">
+    <b>This article covers one checkpoint on the roadmap.</b>
+    <a href="https://weteachkubernetes.com/#deployments-probes">Open <strong>Deployments, probes and rollouts</strong> on the roadmap &rarr;</a>
+    — it lists what this depends on and everything else written about it.
+  </div>
+  <p class="fix">Something wrong or out of date?
+    <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=blog%3A%20deployments-probes-and-rollouts">Open an issue</a> — corrections are
+    welcome and get credited.</p>
+</div></article>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>

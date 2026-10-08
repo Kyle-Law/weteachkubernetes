@@ -1,0 +1,543 @@
+{
+  "_note": "The roadmap structure. Tutorials live in each checkpoint's `resources` array and arrive as pull requests.",
+  "_schema": "https://weteachkubernetes.com/schema/roadmap-v1.json",
+  "_how_to_add_a_tutorial": [
+    "1. Find the checkpoint your tutorial belongs to. Do not invent a new checkpoint for a tutorial.",
+    "2. Append one object to that checkpoint's `resources`.",
+    "3. `by` must be a `handle` that exists in contributors.json. Add yourself there in the same PR if you are new.",
+    "4. `type` is one of: article, video, lab, repo.",
+    "5. `minutes` is honest reading/watching time, not aspirational.",
+    "6. Never add a resource that restates exam questions. The Linux Foundation NDA applies and the PR will be closed.",
+    "7. Open a PR titled `tutorial: <checkpoint-id>`. One checkpoint per PR keeps review fast."
+  ],
+  "updated": "2026-10-08",
+  "tags": [
+    {
+      "id": "KCNA",
+      "label": "KCNA",
+      "kind": "cert",
+      "note": "Kubernetes and Cloud Native Associate"
+    },
+    {
+      "id": "CKAD",
+      "label": "CKAD",
+      "kind": "cert",
+      "note": "Application Developer"
+    },
+    {
+      "id": "CKA",
+      "label": "CKA",
+      "kind": "cert",
+      "note": "Administrator"
+    },
+    {
+      "id": "CKS",
+      "label": "CKS",
+      "kind": "cert",
+      "note": "Security Specialist"
+    },
+    {
+      "id": "KCSA",
+      "label": "KCSA",
+      "kind": "cert",
+      "note": "Security Associate"
+    },
+    {
+      "id": "CKNE",
+      "label": "CKNE",
+      "kind": "cert",
+      "note": "Network Engineer (beta)"
+    },
+    {
+      "id": "Inference",
+      "label": "Inference",
+      "kind": "topic",
+      "note": "Serving models on Kubernetes"
+    },
+    {
+      "id": "Scheduling",
+      "label": "Scheduling",
+      "kind": "topic",
+      "note": "Placement, priority, GPUs, autoscaling"
+    },
+    {
+      "id": "Networking",
+      "label": "Networking",
+      "kind": "topic",
+      "note": "CNI, mesh, Gateway API"
+    },
+    {
+      "id": "Security",
+      "label": "Security",
+      "kind": "topic",
+      "note": "Policy, supply chain, runtime"
+    },
+    {
+      "id": "Observability",
+      "label": "Observability",
+      "kind": "topic",
+      "note": "Metrics, traces, eBPF"
+    },
+    {
+      "id": "GitOps",
+      "label": "GitOps",
+      "kind": "topic",
+      "note": "Declarative delivery"
+    }
+  ],
+  "stages": [
+    {
+      "id": "foundations",
+      "title": "Foundations",
+      "blurb": "Enough of the object model that everything later has somewhere to attach.",
+      "checkpoints": [
+        {
+          "id": "containers-before-k8s",
+          "title": "Containers before Kubernetes",
+          "summary": "Namespaces, cgroups and image layers by hand, so that pod behaviour stops looking like magic.",
+          "tags": [
+            "KCNA"
+          ],
+          "hours": 4,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Containers before Kubernetes",
+              "url": "https://blog.weteachkubernetes.com/containers-before-kubernetes/",
+              "by": "Kyle-Law",
+              "minutes": 8,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "object-model",
+          "title": "The API object model",
+          "summary": "Why everything is a resource, what the control loop actually does, and how to read any CRD you meet later.",
+          "tags": [
+            "KCNA",
+            "CKAD"
+          ],
+          "hours": 5,
+          "resources": [
+            {
+              "type": "article",
+              "title": "The API object model",
+              "url": "https://blog.weteachkubernetes.com/the-api-object-model/",
+              "by": "Kyle-Law",
+              "minutes": 9,
+              "added": "2026-10-08"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "workloads",
+      "title": "Workloads and configuration",
+      "blurb": "Getting your own software to run, survive a restart and be configurable without a rebuild.",
+      "checkpoints": [
+        {
+          "id": "deployments-probes",
+          "title": "Deployments, probes and rollouts",
+          "summary": "Rolling updates that do not drop traffic, and the three probes people keep confusing.",
+          "tags": [
+            "CKAD",
+            "CKA"
+          ],
+          "hours": 6,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Deployments, probes and rollouts",
+              "url": "https://blog.weteachkubernetes.com/deployments-probes-and-rollouts/",
+              "by": "Kyle-Law",
+              "minutes": 10,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "config-secrets",
+          "title": "Config, secrets and the twelve-factor edge cases",
+          "summary": "ConfigMap reload behaviour, projected volumes, and why your secret is base64 and not encrypted.",
+          "tags": [
+            "CKAD",
+            "Security"
+          ],
+          "hours": 4,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Config, secrets and the twelve-factor edge cases",
+              "url": "https://blog.weteachkubernetes.com/config-secrets-and-the-edge-cases/",
+              "by": "Kyle-Law",
+              "minutes": 8,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "gitops-delivery",
+          "title": "Declarative delivery",
+          "summary": "Kustomize overlays and a pull-based reconciler, so environments stop drifting silently.",
+          "tags": [
+            "GitOps",
+            "CKAD"
+          ],
+          "hours": 7,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Declarative delivery",
+              "url": "https://blog.weteachkubernetes.com/declarative-delivery/",
+              "by": "Kyle-Law",
+              "minutes": 9,
+              "added": "2026-10-08"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "operate",
+      "title": "Running a cluster",
+      "blurb": "The part where it is your pager. Control plane internals, upgrades, and recovering from your own mistakes.",
+      "checkpoints": [
+        {
+          "id": "control-plane",
+          "title": "Control plane components and etcd",
+          "summary": "What each component owns, plus a real backup and restore of etcd on a cluster you can throw away.",
+          "tags": [
+            "CKA"
+          ],
+          "hours": 8,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Control plane components and etcd",
+              "url": "https://blog.weteachkubernetes.com/control-plane-and-etcd/",
+              "by": "Kyle-Law",
+              "minutes": 11,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "rbac-tenancy",
+          "title": "RBAC and multi-tenancy",
+          "summary": "Roles that are actually least-privilege, and the three places tenancy leaks anyway.",
+          "tags": [
+            "CKA",
+            "Security",
+            "KCSA"
+          ],
+          "hours": 5,
+          "resources": [
+            {
+              "type": "article",
+              "title": "RBAC and multi-tenancy",
+              "url": "https://blog.weteachkubernetes.com/rbac-and-multi-tenancy/",
+              "by": "Kyle-Law",
+              "minutes": 10,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "troubleshoot",
+          "title": "Troubleshooting under time pressure",
+          "summary": "A fixed order of operations for a broken cluster, so you stop guessing when it matters.",
+          "tags": [
+            "CKA",
+            "Observability"
+          ],
+          "hours": 6,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Troubleshooting under time pressure",
+              "url": "https://blog.weteachkubernetes.com/troubleshooting-under-time-pressure/",
+              "by": "Kyle-Law",
+              "minutes": 9,
+              "added": "2026-10-08"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "networking",
+      "title": "Networking",
+      "blurb": "Where most senior interviews go, and where the CKNE lives. Packets, policy and the mesh question.",
+      "checkpoints": [
+        {
+          "id": "pod-networking",
+          "title": "Pod networking from first principles",
+          "summary": "Follow a packet from one pod to another across nodes, then do it again with the CNI removed.",
+          "tags": [
+            "CKNE",
+            "Networking",
+            "CKA"
+          ],
+          "hours": 7,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Pod networking from first principles",
+              "url": "https://blog.weteachkubernetes.com/pod-networking-from-first-principles/",
+              "by": "Kyle-Law",
+              "minutes": 12,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "network-policy",
+          "title": "Network policy that someone can debug",
+          "summary": "Default-deny without taking production down, and proving the policy does what you claimed.",
+          "tags": [
+            "CKNE",
+            "Networking",
+            "CKS",
+            "Security"
+          ],
+          "hours": 6,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Network policy that someone can debug",
+              "url": "https://blog.weteachkubernetes.com/network-policy-you-can-debug/",
+              "by": "Kyle-Law",
+              "minutes": 10,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "gateway-mesh",
+          "title": "Gateway API and the mesh decision",
+          "summary": "Ingress to Gateway API migration, and an honest list of what a mesh costs you.",
+          "tags": [
+            "CKNE",
+            "Networking"
+          ],
+          "hours": 8,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Gateway API and the mesh decision",
+              "url": "https://blog.weteachkubernetes.com/gateway-api-and-the-mesh-decision/",
+              "by": "Kyle-Law",
+              "minutes": 11,
+              "added": "2026-10-08"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "title": "Security",
+      "blurb": "Supply chain, admission and runtime. The CKS track, plus the parts no exam covers.",
+      "checkpoints": [
+        {
+          "id": "admission-policy",
+          "title": "Admission control and policy as code",
+          "summary": "Pod Security Admission, then a policy engine for the rules PSA cannot express.",
+          "tags": [
+            "CKS",
+            "Security",
+            "KCSA"
+          ],
+          "hours": 7,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Admission control and policy as code",
+              "url": "https://blog.weteachkubernetes.com/admission-control-and-policy-as-code/",
+              "by": "Kyle-Law",
+              "minutes": 10,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "supply-chain",
+          "title": "Supply chain and image provenance",
+          "summary": "Signing, verifying and actually failing closed when verification fails.",
+          "tags": [
+            "CKS",
+            "Security"
+          ],
+          "hours": 6,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Supply chain and image provenance",
+              "url": "https://blog.weteachkubernetes.com/supply-chain-and-image-provenance/",
+              "by": "Kyle-Law",
+              "minutes": 9,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "runtime-detect",
+          "title": "Runtime detection and response",
+          "summary": "Seeing a container do something it should not, and having a plan for the next ten minutes.",
+          "tags": [
+            "CKS",
+            "Security",
+            "Observability"
+          ],
+          "hours": 6,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Runtime detection and response",
+              "url": "https://blog.weteachkubernetes.com/runtime-detection-and-response/",
+              "by": "Kyle-Law",
+              "minutes": 9,
+              "added": "2026-10-08"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "inference",
+      "title": "AI inference and GPUs",
+      "blurb": "No certification covers this yet, which is exactly why it is worth writing down.",
+      "checkpoints": [
+        {
+          "id": "gpu-scheduling",
+          "title": "Getting a GPU into a pod",
+          "summary": "Device plugin, drivers, and the difference between MIG partitioning and time-slicing when cost matters.",
+          "tags": [
+            "Inference",
+            "Scheduling"
+          ],
+          "hours": 8,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Getting a GPU into a pod",
+              "url": "https://blog.weteachkubernetes.com/getting-a-gpu-into-a-pod/",
+              "by": "Kyle-Law",
+              "minutes": 11,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "serving-llms",
+          "title": "Serving a model like a production service",
+          "summary": "vLLM or KServe behind a Gateway, with readiness that reflects model load rather than process start.",
+          "tags": [
+            "Inference",
+            "Networking"
+          ],
+          "hours": 10,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Serving a model like a production service",
+              "url": "https://blog.weteachkubernetes.com/serving-a-model-like-a-production-service/",
+              "by": "Kyle-Law",
+              "minutes": 12,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "inference-scale",
+          "title": "Scaling inference on real traffic",
+          "summary": "Queue-depth autoscaling, cold starts measured in minutes, and the bill as a design constraint.",
+          "tags": [
+            "Inference",
+            "Scheduling",
+            "Observability"
+          ],
+          "hours": 9,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Scaling inference on real traffic",
+              "url": "https://blog.weteachkubernetes.com/scaling-inference-on-real-traffic/",
+              "by": "Kyle-Law",
+              "minutes": 11,
+              "added": "2026-10-08"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "platform",
+      "title": "Platform and scale",
+      "blurb": "What changes when other teams depend on you and nobody reads your docs.",
+      "checkpoints": [
+        {
+          "id": "capacity",
+          "title": "Capacity, bin-packing and autoscaling",
+          "summary": "Requests and limits chosen from data, plus node autoscaling that does not thrash.",
+          "tags": [
+            "Scheduling",
+            "CKA"
+          ],
+          "hours": 7,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Capacity, bin-packing and autoscaling",
+              "url": "https://blog.weteachkubernetes.com/capacity-bin-packing-and-autoscaling/",
+              "by": "Kyle-Law",
+              "minutes": 10,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "slo-observability",
+          "title": "SLOs people actually use",
+          "summary": "Three signals per service, one dashboard, and alerts that correspond to someone being paged.",
+          "tags": [
+            "Observability"
+          ],
+          "hours": 6,
+          "resources": [
+            {
+              "type": "article",
+              "title": "SLOs people actually use",
+              "url": "https://blog.weteachkubernetes.com/slos-people-actually-use/",
+              "by": "Kyle-Law",
+              "minutes": 9,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "extend-k8s",
+          "title": "Extending Kubernetes yourself",
+          "summary": "A CRD and controller with controller-runtime, which is also the shortest route to upstream contribution.",
+          "tags": [
+            "Scheduling",
+            "GitOps"
+          ],
+          "hours": 12,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Extending Kubernetes yourself",
+              "url": "https://blog.weteachkubernetes.com/extending-kubernetes-yourself/",
+              "by": "Kyle-Law",
+              "minutes": 12,
+              "added": "2026-10-08"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

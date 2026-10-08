@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Supply chain and image provenance — We Teach Kubernetes</title>
+<meta name="description" content="Signing, verifying, and actually failing closed when verification fails &amp;mdash; which is the only part that matters.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/supply-chain-and-image-provenance/">
+<link rel="stylesheet" href="../style.css">
+<meta property="og:title" content="Supply chain and image provenance">
+<meta property="og:description" content="Signing, verifying, and actually failing closed when verification fails &amp;mdash; which is the only part that matters.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/supply-chain-and-image-provenance/">
+<meta property="og:type" content="article">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<article><div class="wrap">
+  <div class="kicker">Security</div>
+  <h1>Supply chain and image provenance</h1>
+  <p class="dek">Signing, verifying, and actually failing closed when verification fails &amp;mdash; which is the only part that matters.</p>
+  <div class="meta">
+    <span class="m tag">CKS</span><span class="m topic">Security</span>
+    <span class="m">9 min read</span>
+    <span class="byline">by <a href="https://github.com/Kyle-Law">Kyle Law</a> · 2026-10-08</span>
+  </div>
+  <div class="body">
+      <p>Supply-chain security has a peculiar failure mode: almost everyone implements the signing half and stops. Signatures nobody verifies are a filing system, not a control.</p>
+      <h2>Four separate questions</h2>
+      <ul><li><strong>Integrity</strong> &mdash; is this the same bytes that were built? Digests.</li><li><strong>Authenticity</strong> &mdash; did we build it? Signatures.</li><li><strong>Provenance</strong> &mdash; from which commit, by which pipeline? Attestations.</li><li><strong>Composition</strong> &mdash; what is inside it? An SBOM.</li></ul>
+      <p>They are commonly bundled as one topic and they are not. You can have a signed image full of known-vulnerable packages, and an accurate SBOM for an image nobody can prove you built.</p>
+      <h2>Tags are mutable. Digests are not.</h2>
+      <pre><code><span class="c"># this can point somewhere else tomorrow</span>
+image: ghcr.io/you/api:v1.4.2
+
+<span class="c"># this cannot</span>
+image: ghcr.io/you/api@sha256:3f1b...c90a
+
+<span class="c"># what is that tag right now?</span>
+crane digest ghcr.io/you/api:v1.4.2</code></pre>
+      <p>A tag is a mutable pointer. <code>v1.4.2</code> can be moved, and <code>imagePullPolicy: IfNotPresent</code> means different nodes may be running different bytes under the same tag with no sign of it. Deploying by digest removes a whole class of "works on one node" mystery, and it is what GitOps tooling should write for you.</p>
+      <h2>Sign in the pipeline, verify at admission</h2>
+      <pre><code><span class="c"># in CI, keyless: the identity is the workflow, not a key you have to store</span>
+cosign sign --yes ghcr.io/you/api@sha256:3f1b...c90a
+
+<span class="c"># attach provenance and an SBOM as attestations</span>
+syft ghcr.io/you/api@sha256:3f1b...c90a -o spdx-json &gt; sbom.json
+cosign attest --yes --predicate sbom.json \
+  --type spdxjson ghcr.io/you/api@sha256:3f1b...c90a</code></pre>
+      <p>Keyless signing is the part worth adopting deliberately. Instead of a private key you have to store and rotate, the signature is bound to an OIDC identity &mdash; the specific GitHub Actions workflow in the specific repository. There is no key to leak, and the thing you verify is "built by that workflow", which is what you actually wanted to know.</p>
+      <pre><code>apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-images
+spec:
+  validationFailureAction: Enforce      <span class="c"># the whole point</span>
+  rules:
+    - name: signed-by-our-workflow
+      match:
+        any:
+          - resources: { kinds: [Pod] }
+      verifyImages:
+        - imageReferences: [&quot;ghcr.io/you/*&quot;]
+          attestors:
+            - entries:
+                - keyless:
+                    subject: &quot;https://github.com/you/api/.github/workflows/build.yml@refs/heads/main&quot;
+                    issuer: &quot;https://token.actions.githubusercontent.com&quot;</code></pre>
+      <div class="gotcha"><b>Scope the <code>imageReferences</code> pattern carefully, and leave it in audit mode first.</b> A pattern of <code>*</code> will also catch your CNI, CoreDNS and metrics-server images, none of which are signed by your workflow &mdash; so enforcing it cluster-wide can prevent the cluster from recovering after a node reboot. Match your own registry prefix, and add exemptions for system namespaces before you switch to Enforce.</div>
+      <h2>SBOMs are only useful if something reads them</h2>
+      <p>Generating an SBOM is one command. The value is entirely in what consumes it. A useful minimum: store the SBOM as an attestation next to the image, and run a scanner against your <em>running</em> images on a schedule &mdash; not just at build time. Vulnerability disclosures happen after you ship, which means the build-time scan that passed is not evidence about today.</p>
+      <pre><code><span class="c"># what is actually running, right now</span>
+kubectl get pods -A -o jsonpath=\
+  &#x27;{range .items[*]}{range .status.containerStatuses[*]}{.imageID}{&quot;\n&quot;}{end}{end}&#x27; \
+  | sort -u</code></pre>
+      <p>That list is the only inventory that matters, and it is usually shorter and stranger than anyone expects.</p>
+      <h2>What to actually do with this</h2>
+      <ul><li>Pin one production workload to a digest and notice what else has to change.</li><li>Add <code>cosign sign</code> to one pipeline this week; verification can come later.</li><li>Switch verification on in audit mode and read what fails before enforcing.</li><li>Scan running images on a schedule, not only at build.</li></ul>
+  </div>
+  <div class="back">
+    <b>This article covers one checkpoint on the roadmap.</b>
+    <a href="https://weteachkubernetes.com/#supply-chain">Open <strong>Supply chain and image provenance</strong> on the roadmap &rarr;</a>
+    — it lists what this depends on and everything else written about it.
+  </div>
+  <p class="fix">Something wrong or out of date?
+    <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=blog%3A%20supply-chain-and-image-provenance">Open an issue</a> — corrections are
+    welcome and get credited.</p>
+</div></article>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>

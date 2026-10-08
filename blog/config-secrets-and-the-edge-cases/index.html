@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Config, secrets and the twelve-factor edge cases — We Teach Kubernetes</title>
+<meta name="description" content="ConfigMap reload behaviour, projected volumes, and why your Secret is base64 and not encrypted.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/config-secrets-and-the-edge-cases/">
+<link rel="stylesheet" href="../style.css">
+<meta property="og:title" content="Config, secrets and the twelve-factor edge cases">
+<meta property="og:description" content="ConfigMap reload behaviour, projected volumes, and why your Secret is base64 and not encrypted.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/config-secrets-and-the-edge-cases/">
+<meta property="og:type" content="article">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<article><div class="wrap">
+  <div class="kicker">Workloads and configuration</div>
+  <h1>Config, secrets and the twelve-factor edge cases</h1>
+  <p class="dek">ConfigMap reload behaviour, projected volumes, and why your Secret is base64 and not encrypted.</p>
+  <div class="meta">
+    <span class="m tag">CKAD</span><span class="m topic">Security</span>
+    <span class="m">8 min read</span>
+    <span class="byline">by <a href="https://github.com/Kyle-Law">Kyle Law</a> · 2026-10-08</span>
+  </div>
+  <div class="body">
+      <p>Configuration is the part of Kubernetes that appears finished after an hour and then produces a confusing incident six months later. Two behaviours cause most of them.</p>
+      <h2>Your ConfigMap did not reload, and that is by design</h2>
+      <p>How a ConfigMap reaches your container determines whether it can ever change:</p>
+      <ul><li><strong>As environment variables</strong> — resolved once, at container start. Updating the ConfigMap changes nothing until the pod is replaced. Ever.</li><li><strong>As a mounted volume</strong> — the kubelet refreshes the files, eventually. Up to about a minute by default, and your process still has to notice and re-read them.</li><li><strong>With <code>subPath</code></strong> — <em>never</em> updates. This is the one that catches people.</li></ul>
+      <div class="gotcha"><b>A <code>subPath</code> mount is a one-time copy.</b> It is extremely common, because it is how you put a single config file into a directory that already has other things in it — and it silently opts you out of all updates. If a file must be reloadable, mount the whole volume into its own directory and symlink, or accept that the pod has to restart.</div>
+      <pre><code><span class="c"># force a restart on config change: hash the config into the pod template</span>
+kubectl rollout restart deploy/my-app
+
+<span class="c"># or, the declarative version - annotate with a checksum so the template itself changes</span>
+<span class="c"># annotations:</span>
+<span class="c">#   config/checksum: &quot;{{ sha256sum of the ConfigMap }}&quot;</span></code></pre>
+      <p>That annotation trick is what Helm charts do, and it is worth copying even if you do not use Helm. It converts "config changed but nothing happened" into an ordinary rollout.</p>
+      <h2>A Secret is not encrypted</h2>
+      <p>Secret data is base64-encoded, which is an encoding, not a protection. Anyone who can read the Secret can read the value:</p>
+      <pre><code>kubectl get secret db -o jsonpath=&#x27;{.data.password}&#x27; | base64 -d</code></pre>
+      <p>Two things follow. First, the real control is RBAC — who can <code>get</code> Secrets in that namespace, and who can create a pod that mounts them. Second, by default they are stored in etcd as plaintext, so an etcd backup is a credential dump. Encryption at rest is a cluster-level setting you have to turn on deliberately.</p>
+      <ul><li>Prefer mounted files over environment variables: env vars leak into crash dumps, child processes and <code>/proc/&lt;pid&gt;/environ</code>.</li><li>Never <code>kubectl describe</code> a pod into a shared channel without checking what is in it.</li><li>For anything serious, keep the source of truth outside the cluster and sync it in — External Secrets Operator or the CSI secrets driver — so rotation happens in one place.</li></ul>
+      <h2>Projected volumes are underused</h2>
+      <p>You can assemble one directory out of several sources, which keeps application code from caring where anything came from:</p>
+      <pre><code>volumes:
+  - name: config
+    projected:
+      sources:
+        - configMap: { name: app-config }
+        - secret:    { name: app-secrets }
+        - serviceAccountToken:          <span class="c"># short-lived, audience-scoped</span>
+            path: token
+            expirationSeconds: 3600
+            audience: vault</code></pre>
+      <p>That last source is the one worth knowing. A projected ServiceAccount token is time-limited and bound to an audience, so a leaked token expires and is only accepted by the service it was minted for. It is the basis of every sane workload-identity setup, and it replaces long-lived mounted tokens.</p>
+      <h2>What to actually do with this</h2>
+      <ul><li>Find every <code>subPath</code> mount you own and decide whether it needs to be reloadable.</li><li>Move secrets from <code>env</code> to mounted files on your most sensitive service.</li><li>Check whether encryption at rest is enabled on your cluster. Assume it is not until you have looked.</li></ul>
+  </div>
+  <div class="back">
+    <b>This article covers one checkpoint on the roadmap.</b>
+    <a href="https://weteachkubernetes.com/#config-secrets">Open <strong>Config, secrets and the twelve-factor edge cases</strong> on the roadmap &rarr;</a>
+    — it lists what this depends on and everything else written about it.
+  </div>
+  <p class="fix">Something wrong or out of date?
+    <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=blog%3A%20config-secrets-and-the-edge-cases">Open an issue</a> — corrections are
+    welcome and get credited.</p>
+</div></article>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>

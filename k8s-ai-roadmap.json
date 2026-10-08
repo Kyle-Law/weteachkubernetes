@@ -1,0 +1,1471 @@
+{
+  "meta": {
+    "title": "Kubernetes for AI: Learning Roadmap",
+    "version": "1.0.0",
+    "asOf": "2026-10-08",
+    "pace": "8-10 hours per week, about 5-6 months",
+    "schema": {
+      "node.type": "concept | tool | lab | milestone",
+      "node.level": "beginner | intermediate | advanced",
+      "node.dependsOn": "ids of nodes to finish first; together they form the roadmap graph",
+      "node.optional": "true for alternatives or extras you can skip",
+      "node.estimatedHours": "rough study and practice time"
+    },
+    "tagGroups": {
+      "domain": [
+        "fundamentals",
+        "containers",
+        "storage",
+        "networking",
+        "gpu",
+        "scheduling",
+        "training",
+        "inference",
+        "observability",
+        "autoscaling",
+        "mlops",
+        "multi-tenancy",
+        "cost",
+        "security",
+        "agents",
+        "gitops"
+      ],
+      "kind": [
+        "concept",
+        "hands-on",
+        "tool",
+        "api",
+        "operator",
+        "cncf",
+        "standard"
+      ],
+      "status": [
+        "core",
+        "emerging"
+      ]
+    },
+    "stats": {
+      "nodes": 69,
+      "edges": 114,
+      "totalHours": 227
+    }
+  },
+  "phases": [
+    {
+      "id": "p0",
+      "order": 0,
+      "title": "Prerequisites",
+      "weeks": "2-4",
+      "goal": "Solid core Kubernetes and ML vocabulary"
+    },
+    {
+      "id": "p1",
+      "order": 1,
+      "title": "GPUs and accelerators",
+      "weeks": "3",
+      "goal": "Get GPUs from hardware into a Pod, via device plugins and DRA"
+    },
+    {
+      "id": "p2",
+      "order": 2,
+      "title": "Scheduling and distributed training",
+      "weeks": "4",
+      "goal": "Schedule whole jobs and share GPUs fairly between teams"
+    },
+    {
+      "id": "p3",
+      "order": 3,
+      "title": "Inference and serving",
+      "weeks": "5",
+      "goal": "Serve LLMs with model-aware routing"
+    },
+    {
+      "id": "p4",
+      "order": 4,
+      "title": "Production operations",
+      "weeks": "4",
+      "goal": "Keep AI workloads fast, observable and affordable"
+    },
+    {
+      "id": "p5",
+      "order": 5,
+      "title": "Emerging areas",
+      "weeks": "2, then ongoing",
+      "goal": "Follow agents, sandboxing and conformance"
+    },
+    {
+      "id": "cap",
+      "order": 6,
+      "title": "Capstone",
+      "weeks": "ongoing from p4",
+      "goal": "An internal LLM service for two teams, rebuilt from Git"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "containers",
+      "phase": "p0",
+      "type": "concept",
+      "title": "Containers and images",
+      "summary": "Build, tag and push images; keep large AI images manageable.",
+      "level": "beginner",
+      "tags": [
+        "fundamentals",
+        "containers",
+        "concept",
+        "core"
+      ],
+      "estimatedHours": 4,
+      "dependsOn": []
+    },
+    {
+      "id": "core-objects",
+      "phase": "p0",
+      "type": "concept",
+      "title": "Core workload objects",
+      "summary": "Pods, Deployments, Services and Jobs.",
+      "level": "beginner",
+      "tags": [
+        "fundamentals",
+        "concept",
+        "api",
+        "core"
+      ],
+      "estimatedHours": 6,
+      "dependsOn": [
+        "containers"
+      ],
+      "resources": [
+        {
+          "title": "Kubernetes concepts",
+          "url": "https://kubernetes.io/docs/concepts/"
+        }
+      ]
+    },
+    {
+      "id": "config-secrets",
+      "phase": "p0",
+      "type": "concept",
+      "title": "ConfigMaps and Secrets",
+      "summary": "Pass configuration and credentials such as model-hub tokens to Pods.",
+      "level": "beginner",
+      "tags": [
+        "fundamentals",
+        "security",
+        "api",
+        "core"
+      ],
+      "estimatedHours": 2,
+      "dependsOn": [
+        "core-objects"
+      ]
+    },
+    {
+      "id": "storage-basics",
+      "phase": "p0",
+      "type": "concept",
+      "title": "Persistent storage",
+      "summary": "PersistentVolumes, PVCs and StorageClasses for datasets and model weights.",
+      "level": "beginner",
+      "tags": [
+        "fundamentals",
+        "storage",
+        "api",
+        "core"
+      ],
+      "estimatedHours": 4,
+      "dependsOn": [
+        "core-objects"
+      ]
+    },
+    {
+      "id": "scheduling-basics",
+      "phase": "p0",
+      "type": "concept",
+      "title": "Scheduling basics",
+      "summary": "Requests and limits, node selectors, taints, tolerations and affinity.",
+      "level": "beginner",
+      "tags": [
+        "fundamentals",
+        "scheduling",
+        "concept",
+        "core"
+      ],
+      "estimatedHours": 4,
+      "dependsOn": [
+        "core-objects"
+      ]
+    },
+    {
+      "id": "extending-k8s",
+      "phase": "p0",
+      "type": "concept",
+      "title": "CRDs, operators and Helm",
+      "summary": "How almost every AI tool on Kubernetes is packaged and extended.",
+      "level": "intermediate",
+      "tags": [
+        "fundamentals",
+        "operator",
+        "tool",
+        "core"
+      ],
+      "estimatedHours": 5,
+      "dependsOn": [
+        "core-objects"
+      ]
+    },
+    {
+      "id": "ml-basics",
+      "phase": "p0",
+      "type": "concept",
+      "title": "ML workload basics",
+      "summary": "Training vs fine-tuning vs inference, and what a model server does.",
+      "level": "beginner",
+      "tags": [
+        "fundamentals",
+        "training",
+        "inference",
+        "concept",
+        "core"
+      ],
+      "estimatedHours": 3,
+      "dependsOn": []
+    },
+    {
+      "id": "lab-p0",
+      "phase": "p0",
+      "type": "lab",
+      "title": "Lab: Helm app and batch Job",
+      "summary": "On kind or minikube, deploy an app with Helm and run a Job that writes to a PVC.",
+      "level": "beginner",
+      "tags": [
+        "fundamentals",
+        "storage",
+        "hands-on",
+        "core"
+      ],
+      "estimatedHours": 3,
+      "dependsOn": [
+        "storage-basics",
+        "extending-k8s",
+        "config-secrets"
+      ]
+    },
+    {
+      "id": "ms-p0",
+      "phase": "p0",
+      "type": "milestone",
+      "title": "Milestone: debug a Pending Pod",
+      "summary": "Explain why a Pod is Pending and fix it from kubectl describe output.",
+      "level": "beginner",
+      "tags": [
+        "fundamentals",
+        "scheduling",
+        "hands-on",
+        "core"
+      ],
+      "estimatedHours": 1,
+      "dependsOn": [
+        "scheduling-basics",
+        "lab-p0"
+      ]
+    },
+    {
+      "id": "gpu-device-plugin",
+      "phase": "p1",
+      "type": "concept",
+      "title": "Device plugin model",
+      "summary": "How nvidia.com/gpu is advertised and requested as an integer resource.",
+      "level": "intermediate",
+      "tags": [
+        "gpu",
+        "scheduling",
+        "concept",
+        "core"
+      ],
+      "estimatedHours": 3,
+      "dependsOn": [
+        "ms-p0"
+      ]
+    },
+    {
+      "id": "gpu-operator",
+      "phase": "p1",
+      "type": "tool",
+      "title": "NVIDIA GPU Operator",
+      "summary": "Drivers, container toolkit, device plugin and DCGM exporter as one operator.",
+      "level": "intermediate",
+      "tags": [
+        "gpu",
+        "operator",
+        "tool",
+        "core"
+      ],
+      "estimatedHours": 5,
+      "dependsOn": [
+        "gpu-device-plugin",
+        "extending-k8s"
+      ],
+      "resources": [
+        {
+          "title": "GPU Operator docs",
+          "url": "https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/index.html"
+        }
+      ]
+    },
+    {
+      "id": "gpu-node-labels",
+      "phase": "p1",
+      "type": "tool",
+      "title": "Node Feature Discovery and GPU labels",
+      "summary": "Label nodes by GPU model and memory so workloads land on the right hardware.",
+      "level": "intermediate",
+      "tags": [
+        "gpu",
+        "scheduling",
+        "tool",
+        "core"
+      ],
+      "estimatedHours": 2,
+      "dependsOn": [
+        "gpu-operator"
+      ]
+    },
+    {
+      "id": "gpu-time-slicing",
+      "phase": "p1",
+      "type": "concept",
+      "title": "GPU time-slicing",
+      "summary": "Share one GPU between Pods by time, with no memory isolation.",
+      "level": "intermediate",
+      "tags": [
+        "gpu",
+        "cost",
+        "concept",
+        "core"
+      ],
+      "estimatedHours": 2,
+      "dependsOn": [
+        "gpu-operator"
+      ]
+    },
+    {
+      "id": "gpu-mig",
+      "phase": "p1",
+      "type": "concept",
+      "title": "Multi-Instance GPU (MIG)",
+      "summary": "Partition a GPU into isolated slices with their own memory.",
+      "level": "intermediate",
+      "tags": [
+        "gpu",
+        "cost",
+        "multi-tenancy",
+        "concept",
+        "core"
+      ],
+      "estimatedHours": 3,
+      "dependsOn": [
+        "gpu-operator"
+      ]
+    },
+    {
+      "id": "dra-concepts",
+      "phase": "p1",
+      "type": "concept",
+      "title": "Dynamic Resource Allocation (DRA)",
+      "summary": "DeviceClasses, ResourceSlices, ResourceClaims and ResourceClaimTemplates; GA since Kubernetes 1.34.",
+      "level": "advanced",
+      "tags": [
+        "gpu",
+        "scheduling",
+        "api",
+        "standard",
+        "core"
+      ],
+      "estimatedHours": 5,
+      "dependsOn": [
+        "gpu-device-plugin"
+      ],
+      "resources": [
+        {
+          "title": "Kubernetes DRA docs",
+          "url": "https://kubernetes.io/docs/concepts/scheduling-eviction/dynamic-resource-allocation/"
+        }
+      ]
+    },
+    {
+      "id": "dra-drivers",
+      "phase": "p1",
+      "type": "tool",
+      "title": "DRA drivers",
+      "summary": "Vendor drivers that publish devices, including fractional GPUs and multi-node NVLink.",
+      "level": "advanced",
+      "tags": [
+        "gpu",
+        "tool",
+        "cncf",
+        "emerging"
+      ],
+      "estimatedHours": 3,
+      "dependsOn": [
+        "dra-concepts",
+        "gpu-mig"
+      ]
+    },
+    {
+      "id": "lab-p1",
+      "phase": "p1",
+      "type": "lab",
+      "title": "Lab: GPU Pod two ways",
+      "summary": "Install the GPU Operator, run a CUDA sample, then request the GPU through a ResourceClaim.",
+      "level": "intermediate",
+      "tags": [
+        "gpu",
+        "hands-on",
+        "core"
+      ],
+      "estimatedHours": 4,
+      "dependsOn": [
+        "gpu-operator",
+        "dra-concepts"
+      ]
+    },
+    {
+      "id": "ms-p1",
+      "phase": "p1",
+      "type": "milestone",
+      "title": "Milestone: choose a GPU sharing model",
+      "summary": "Explain when to use MIG, time-slicing or a whole GPU, and write a ResourceClaim by hand.",
+      "level": "intermediate",
+      "tags": [
+        "gpu",
+        "hands-on",
+        "core"
+      ],
+      "estimatedHours": 1,
+      "dependsOn": [
+        "lab-p1",
+        "gpu-time-slicing",
+        "gpu-mig",
+        "gpu-node-labels",
+        "dra-drivers"
+      ]
+    },
+    {
+      "id": "gang-scheduling",
+      "phase": "p2",
+      "type": "concept",
+      "title": "Gang scheduling",
+      "summary": "All Pods of a job start together or not at all, avoiding partial-allocation deadlock.",
+      "level": "intermediate",
+      "tags": [
+        "scheduling",
+        "training",
+        "concept",
+        "core"
+      ],
+      "estimatedHours": 2,
+      "dependsOn": [
+        "ms-p1"
+      ]
+    },
+    {
+      "id": "kueue-basics",
+      "phase": "p2",
+      "type": "tool",
+      "title": "Kueue: queues and quotas",
+      "summary": "ClusterQueues, LocalQueues, ResourceFlavors and job admission.",
+      "level": "intermediate",
+      "tags": [
+        "scheduling",
+        "multi-tenancy",
+        "tool",
+        "core"
+      ],
+      "estimatedHours": 5,
+      "dependsOn": [
+        "gang-scheduling"
+      ],
+      "resources": [
+        {
+          "title": "Kueue docs",
+          "url": "https://kueue.sigs.k8s.io/"
+        }
+      ]
+    },
+    {
+      "id": "kueue-fairness",
+      "phase": "p2",
+      "type": "tool",
+      "title": "Kueue: borrowing, preemption and fair share",
+      "summary": "Let idle quota be borrowed and reclaimed by priority.",
+      "level": "advanced",
+      "tags": [
+        "scheduling",
+        "multi-tenancy",
+        "cost",
+        "tool",
+        "core"
+      ],
+      "estimatedHours": 4,
+      "dependsOn": [
+        "kueue-basics"
+      ]
+    },
+    {
+      "id": "volcano",
+      "phase": "p2",
+      "type": "tool",
+      "title": "Volcano scheduler",
+      "summary": "Batch scheduler with gang scheduling and queues; an alternative to Kueue.",
+      "level": "intermediate",
+      "tags": [
+        "scheduling",
+        "tool",
+        "cncf",
+        "core"
+      ],
+      "estimatedHours": 2,
+      "dependsOn": [
+        "gang-scheduling"
+      ],
+      "optional": true
+    },
+    {
+      "id": "kai-scheduler",
+      "phase": "p2",
+      "type": "tool",
+      "title": "KAI Scheduler",
+      "summary": "NVIDIA's CNCF Sandbox scheduler: DRA-aware gang scheduling, hierarchical queues, topology-aware placement.",
+      "level": "advanced",
+      "tags": [
+        "scheduling",
+        "gpu",
+        "tool",
+        "cncf",
+        "emerging"
+      ],
+      "estimatedHours": 3,
+      "dependsOn": [
+        "gang-scheduling",
+        "dra-concepts"
+      ],
+      "optional": true
+    },
+    {
+      "id": "topology-aware",
+      "phase": "p2",
+      "type": "concept",
+      "title": "Topology-aware placement",
+      "summary": "Keep a job's GPUs on the same node, rack or NVLink domain.",
+      "level": "advanced",
+      "tags": [
+        "scheduling",
+        "gpu",
+        "training",
+        "concept",
+        "core"
+      ],
+      "estimatedHours": 2,
+      "dependsOn": [
+        "gang-scheduling",
+        "gpu-node-labels"
+      ]
+    },
+    {
+      "id": "distributed-training",
+      "phase": "p2",
+      "type": "concept",
+      "title": "Distributed training basics",
+      "summary": "Data, tensor and pipeline parallelism, and why workers must start together.",
+      "level": "intermediate",
+      "tags": [
+        "training",
+        "concept",
+        "core"
+      ],
+      "estimatedHours": 3,
+      "dependsOn": [
+        "ml-basics"
+      ]
+    },
+    {
+      "id": "kubeflow-trainer",
+      "phase": "p2",
+      "type": "tool",
+      "title": "Kubeflow Trainer",
+      "summary": "Run multi-worker PyTorch training jobs as Kubernetes resources.",
+      "level": "intermediate",
+      "tags": [
+        "training",
+        "operator",
+        "tool",
+        "cncf",
+        "core"
+      ],
+      "estimatedHours": 4,
+      "dependsOn": [
+        "distributed-training",
+        "extending-k8s"
+      ],
+      "resources": [
+        {
+          "title": "Kubeflow",
+          "url": "https://www.kubeflow.org/"
+        }
+      ]
+    },
+    {
+      "id": "kuberay",
+      "phase": "p2",
+      "type": "tool",
+      "title": "KubeRay",
+      "summary": "Run Ray clusters, jobs and Ray Serve on Kubernetes.",
+      "level": "intermediate",
+      "tags": [
+        "training",
+        "inference",
+        "operator",
+        "tool",
+        "core"
+      ],
+      "estimatedHours": 3,
+      "dependsOn": [
+        "distributed-training",
+        "extending-k8s"
+      ],
+      "optional": true,
+      "resources": [
+        {
+          "title": "KubeRay docs",
+          "url": "https://docs.ray.io/en/latest/cluster/kubernetes/index.html"
+        }
+      ]
+    },
+    {
+      "id": "jobset",
+      "phase": "p2",
+      "type": "api",
+      "title": "JobSet",
+      "summary": "Group several Jobs into one unit for multi-role training.",
+      "level": "advanced",
+      "tags": [
+        "training",
+        "scheduling",
+        "api",
+        "core"
+      ],
+      "estimatedHours": 2,
+      "dependsOn": [
+        "distributed-training"
+      ],
+      "optional": true
+    },
+    {
+      "id": "checkpointing",
+      "phase": "p2",
+      "type": "concept",
+      "title": "Checkpointing",
+      "summary": "Save training state to shared storage so preempted jobs can resume.",
+      "level": "intermediate",
+      "tags": [
+        "training",
+        "storage",
+        "concept",
+        "core"
+      ],
+      "estimatedHours": 2,
+      "dependsOn": [
+        "storage-basics",
+        "distributed-training"
+      ]
+    },
+    {
+      "id": "lab-p2",
+      "phase": "p2",
+      "type": "lab",
+      "title": "Lab: two teams, one GPU quota",
+      "summary": "Two Kueue team queues share GPUs; submit PyTorch jobs from each and watch borrowing and preemption.",
+      "level": "advanced",
+      "tags": [
+        "scheduling",
+        "training",
+        "multi-tenancy",
+        "hands-on",
+        "core"
+      ],
+      "estimatedHours": 5,
+      "dependsOn": [
+        "kueue-fairness",
+        "kubeflow-trainer",
+        "checkpointing"
+      ]
+    },
+    {
+      "id": "ms-p2",
+      "phase": "p2",
+      "type": "milestone",
+      "title": "Milestone: design a shared GPU queue",
+      "summary": "Design queues for three teams sharing one GPU pool, with fair-share and priority rules.",
+      "level": "advanced",
+      "tags": [
+        "scheduling",
+        "multi-tenancy",
+        "hands-on",
+        "core"
+      ],
+      "estimatedHours": 1,
+      "dependsOn": [
+        "lab-p2",
+        "topology-aware"
+      ]
+    },
+    {
+      "id": "llm-serving-basics",
+      "phase": "p3",
+      "type": "concept",
+      "title": "LLM serving internals",
+      "summary": "KV cache, continuous batching, prefix caching, and why request cost varies so much.",
+      "level": "intermediate",
+      "tags": [
+        "inference",
+        "concept",
+        "core"
+      ],
+      "estimatedHours": 4,
+      "dependsOn": [
+        "ml-basics",
+        "ms-p1"
+      ]
+    },
+    {
+      "id": "vllm",
+      "phase": "p3",
+      "type": "tool",
+      "title": "vLLM model server",
+      "summary": "Deploy and tune vLLM on a GPU Pod.",
+      "level": "intermediate",
+      "tags": [
+        "inference",
+        "gpu",
+        "tool",
+        "core"
+      ],
+      "estimatedHours": 5,
+      "dependsOn": [
+        "llm-serving-basics"
+      ],
+      "resources": [
+        {
+          "title": "vLLM docs",
+          "url": "https://docs.vllm.ai/"
+        }
+      ]
+    },
+    {
+      "id": "model-loading",
+      "phase": "p3",
+      "type": "concept",
+      "title": "Model weight loading",
+      "summary": "Pull weights fast from object storage or a cache to cut cold starts.",
+      "level": "intermediate",
+      "tags": [
+        "inference",
+        "storage",
+        "concept",
+        "core"
+      ],
+      "estimatedHours": 3,
+      "dependsOn": [
+        "vllm",
+        "storage-basics"
+      ]
+    },
+    {
+      "id": "kserve",
+      "phase": "p3",
+      "type": "tool",
+      "title": "KServe",
+      "summary": "InferenceService resources for deploying and versioning models.",
+      "level": "intermediate",
+      "tags": [
+        "inference",
+        "operator",
+        "tool",
+        "cncf",
+        "core"
+      ],
+      "estimatedHours": 4,
+      "dependsOn": [
+        "vllm",
+        "extending-k8s"
+      ],
+      "resources": [
+        {
+          "title": "KServe docs",
+          "url": "https://kserve.github.io/website/"
+        }
+      ]
+    },
+    {
+      "id": "gateway-api",
+      "phase": "p3",
+      "type": "api",
+      "title": "Gateway API basics",
+      "summary": "Gateways, HTTPRoutes and how they replace Ingress.",
+      "level": "intermediate",
+      "tags": [
+        "networking",
+        "api",
+        "standard",
+        "core"
+      ],
+      "estimatedHours": 3,
+      "dependsOn": [
+        "core-objects"
+      ]
+    },
+    {
+      "id": "inference-gateway",
+      "phase": "p3",
+      "type": "api",
+      "title": "Gateway API Inference Extension",
+      "summary": "Model-aware routing by model name, LoRA adapter, load and prefix-cache hits.",
+      "level": "advanced",
+      "tags": [
+        "inference",
+        "networking",
+        "api",
+        "standard",
+        "core"
+      ],
+      "estimatedHours": 5,
+      "dependsOn": [
+        "gateway-api",
+        "vllm"
+      ],
+      "resources": [
+        {
+          "title": "Inference Extension docs",
+          "url": "https://gateway-api-inference-extension.sigs.k8s.io/"
+        }
+      ]
+    },
+    {
+      "id": "llm-d",
+      "phase": "p3",
+      "type": "tool",
+      "title": "llm-d",
+      "summary": "Distributed LLM inference stack built on vLLM, the Inference Gateway, LWS and DRA.",
+      "level": "advanced",
+      "tags": [
+        "inference",
+        "tool",
+        "cncf",
+        "emerging"
+      ],
+      "estimatedHours": 4,
+      "dependsOn": [
+        "inference-gateway",
+        "lws"
+      ],
+      "resources": [
+        {
+          "title": "llm-d",
+          "url": "https://llm-d.ai/"
+        }
+      ]
+    },
+    {
+      "id": "lws",
+      "phase": "p3",
+      "type": "api",
+      "title": "LeaderWorkerSet (LWS)",
+      "summary": "Run one model replica across several nodes when it won't fit on one.",
+      "level": "advanced",
+      "tags": [
+        "inference",
+        "scheduling",
+        "api",
+        "core"
+      ],
+      "estimatedHours": 3,
+      "dependsOn": [
+        "vllm",
+        "gang-scheduling"
+      ],
+      "resources": [
+        {
+          "title": "LWS docs",
+          "url": "https://lws.sigs.k8s.io/"
+        }
+      ]
+    },
+    {
+      "id": "ai-gateway",
+      "phase": "p3",
+      "type": "tool",
+      "title": "AI gateways",
+      "summary": "Envoy AI Gateway and similar: token-based rate limits and provider failover.",
+      "level": "intermediate",
+      "tags": [
+        "inference",
+        "networking",
+        "tool",
+        "emerging"
+      ],
+      "estimatedHours": 3,
+      "dependsOn": [
+        "gateway-api"
+      ],
+      "optional": true
+    },
+    {
+      "id": "llm-benchmarking",
+      "phase": "p3",
+      "type": "concept",
+      "title": "LLM load testing",
+      "summary": "Measure time to first token, tokens per second and p95 latency under load.",
+      "level": "intermediate",
+      "tags": [
+        "inference",
+        "observability",
+        "hands-on",
+        "core"
+      ],
+      "estimatedHours": 3,
+      "dependsOn": [
+        "vllm"
+      ]
+    },
+    {
+      "id": "lab-p3",
+      "phase": "p3",
+      "type": "lab",
+      "title": "Lab: vLLM behind the Inference Gateway",
+      "summary": "Serve a 1B-8B model on two replicas, load-test it, and compare against a plain Service.",
+      "level": "advanced",
+      "tags": [
+        "inference",
+        "networking",
+        "hands-on",
+        "core"
+      ],
+      "estimatedHours": 6,
+      "dependsOn": [
+        "inference-gateway",
+        "llm-benchmarking",
+        "model-loading"
+      ]
+    },
+    {
+      "id": "ms-p3",
+      "phase": "p3",
+      "type": "milestone",
+      "title": "Milestone: explain LLM load balancing",
+      "summary": "Show with your own numbers why round-robin performs badly for LLMs.",
+      "level": "advanced",
+      "tags": [
+        "inference",
+        "networking",
+        "hands-on",
+        "core"
+      ],
+      "estimatedHours": 1,
+      "dependsOn": [
+        "lab-p3",
+        "kserve"
+      ]
+    },
+    {
+      "id": "gpu-metrics",
+      "phase": "p4",
+      "type": "tool",
+      "title": "GPU metrics",
+      "summary": "DCGM exporter, Prometheus and Grafana for GPU utilization and memory.",
+      "level": "intermediate",
+      "tags": [
+        "observability",
+        "gpu",
+        "tool",
+        "core"
+      ],
+      "estimatedHours": 4,
+      "dependsOn": [
+        "gpu-operator",
+        "ms-p3"
+      ]
+    },
+    {
+      "id": "llm-observability",
+      "phase": "p4",
+      "type": "tool",
+      "title": "LLM request tracing",
+      "summary": "OpenTelemetry traces plus serving metrics such as queue depth and token throughput.",
+      "level": "intermediate",
+      "tags": [
+        "observability",
+        "inference",
+        "tool",
+        "standard",
+        "core"
+      ],
+      "estimatedHours": 4,
+      "dependsOn": [
+        "llm-benchmarking",
+        "ms-p3"
+      ]
+    },
+    {
+      "id": "pod-autoscaling",
+      "phase": "p4",
+      "type": "tool",
+      "title": "Workload autoscaling",
+      "summary": "KEDA or HPA on queue depth and GPU metrics instead of CPU.",
+      "level": "intermediate",
+      "tags": [
+        "autoscaling",
+        "inference",
+        "tool",
+        "cncf",
+        "core"
+      ],
+      "estimatedHours": 4,
+      "dependsOn": [
+        "gpu-metrics",
+        "llm-observability"
+      ]
+    },
+    {
+      "id": "node-autoscaling",
+      "phase": "p4",
+      "type": "tool",
+      "title": "GPU node autoscaling",
+      "summary": "Cluster Autoscaler or Karpenter for adding and removing GPU nodes.",
+      "level": "advanced",
+      "tags": [
+        "autoscaling",
+        "gpu",
+        "cost",
+        "tool",
+        "core"
+      ],
+      "estimatedHours": 3,
+      "dependsOn": [
+        "pod-autoscaling",
+        "gpu-node-labels"
+      ]
+    },
+    {
+      "id": "scale-to-zero",
+      "phase": "p4",
+      "type": "concept",
+      "title": "Scale to zero",
+      "summary": "Shut idle models down and trade cost against cold-start time.",
+      "level": "advanced",
+      "tags": [
+        "autoscaling",
+        "cost",
+        "inference",
+        "concept",
+        "core"
+      ],
+      "estimatedHours": 2,
+      "dependsOn": [
+        "pod-autoscaling",
+        "model-loading"
+      ]
+    },
+    {
+      "id": "ai-storage-backup",
+      "phase": "p4",
+      "type": "concept",
+      "title": "Stateful AI storage and backup",
+      "summary": "Back up model weights, checkpoints and fine-tuning data.",
+      "level": "intermediate",
+      "tags": [
+        "storage",
+        "training",
+        "concept",
+        "core"
+      ],
+      "estimatedHours": 2,
+      "dependsOn": [
+        "checkpointing"
+      ]
+    },
+    {
+      "id": "ml-pipelines",
+      "phase": "p4",
+      "type": "tool",
+      "title": "ML pipelines",
+      "summary": "Kubeflow Pipelines for repeatable train, evaluate and deploy runs.",
+      "level": "intermediate",
+      "tags": [
+        "mlops",
+        "tool",
+        "cncf",
+        "core"
+      ],
+      "estimatedHours": 4,
+      "dependsOn": [
+        "kubeflow-trainer",
+        "kserve"
+      ],
+      "optional": true
+    },
+    {
+      "id": "model-registry",
+      "phase": "p4",
+      "type": "tool",
+      "title": "Model registry",
+      "summary": "Track model versions and lineage, for example with MLflow.",
+      "level": "intermediate",
+      "tags": [
+        "mlops",
+        "tool",
+        "core"
+      ],
+      "estimatedHours": 2,
+      "dependsOn": [
+        "ml-pipelines"
+      ],
+      "optional": true
+    },
+    {
+      "id": "multi-tenancy",
+      "phase": "p4",
+      "type": "concept",
+      "title": "Multi-tenancy on shared GPUs",
+      "summary": "Namespaces, quotas, RBAC and network policies to isolate teams.",
+      "level": "advanced",
+      "tags": [
+        "multi-tenancy",
+        "security",
+        "concept",
+        "core"
+      ],
+      "estimatedHours": 4,
+      "dependsOn": [
+        "kueue-fairness",
+        "gpu-mig"
+      ]
+    },
+    {
+      "id": "gpu-cost",
+      "phase": "p4",
+      "type": "concept",
+      "title": "GPU cost management",
+      "summary": "Spot GPU nodes, right-sizing with MIG, and cost per 1,000 requests.",
+      "level": "advanced",
+      "tags": [
+        "cost",
+        "gpu",
+        "concept",
+        "core"
+      ],
+      "estimatedHours": 3,
+      "dependsOn": [
+        "node-autoscaling",
+        "scale-to-zero"
+      ]
+    },
+    {
+      "id": "gitops",
+      "phase": "p4",
+      "type": "tool",
+      "title": "GitOps delivery",
+      "summary": "Deploy the whole AI stack from Git with Helm and Argo CD.",
+      "level": "intermediate",
+      "tags": [
+        "gitops",
+        "tool",
+        "cncf",
+        "core"
+      ],
+      "estimatedHours": 3,
+      "dependsOn": [
+        "extending-k8s"
+      ]
+    },
+    {
+      "id": "lab-p4",
+      "phase": "p4",
+      "type": "lab",
+      "title": "Lab: observe and autoscale",
+      "summary": "Dashboard the Phase 3 model, autoscale it with KEDA, scale to zero overnight, and time the cold start.",
+      "level": "advanced",
+      "tags": [
+        "observability",
+        "autoscaling",
+        "hands-on",
+        "core"
+      ],
+      "estimatedHours": 5,
+      "dependsOn": [
+        "pod-autoscaling",
+        "scale-to-zero"
+      ]
+    },
+    {
+      "id": "ms-p4",
+      "phase": "p4",
+      "type": "milestone",
+      "title": "Milestone: report on a running model",
+      "summary": "Report GPU use, cost per 1,000 requests and p95 latency for a model you run.",
+      "level": "advanced",
+      "tags": [
+        "observability",
+        "cost",
+        "hands-on",
+        "core"
+      ],
+      "estimatedHours": 1,
+      "dependsOn": [
+        "lab-p4",
+        "gpu-cost",
+        "multi-tenancy",
+        "ai-storage-backup"
+      ]
+    },
+    {
+      "id": "agents-on-k8s",
+      "phase": "p5",
+      "type": "concept",
+      "title": "AI agents as workloads",
+      "summary": "Run autonomous agents as Pods that call models and tools.",
+      "level": "advanced",
+      "tags": [
+        "agents",
+        "inference",
+        "concept",
+        "emerging"
+      ],
+      "estimatedHours": 3,
+      "dependsOn": [
+        "ms-p4"
+      ]
+    },
+    {
+      "id": "agent-sandbox",
+      "phase": "p5",
+      "type": "tool",
+      "title": "Kubernetes Agent Sandbox",
+      "summary": "Isolated execution for code that agents run.",
+      "level": "advanced",
+      "tags": [
+        "agents",
+        "security",
+        "tool",
+        "emerging"
+      ],
+      "estimatedHours": 3,
+      "dependsOn": [
+        "agents-on-k8s",
+        "multi-tenancy"
+      ]
+    },
+    {
+      "id": "ai-supply-chain",
+      "phase": "p5",
+      "type": "concept",
+      "title": "AI supply-chain security",
+      "summary": "Image signing, model provenance and limiting what workloads can reach.",
+      "level": "advanced",
+      "tags": [
+        "security",
+        "containers",
+        "concept",
+        "emerging"
+      ],
+      "estimatedHours": 3,
+      "dependsOn": [
+        "containers",
+        "ms-p4"
+      ]
+    },
+    {
+      "id": "ai-conformance",
+      "phase": "p5",
+      "type": "concept",
+      "title": "Kubernetes AI Conformance",
+      "summary": "What a platform must support to be certified AI-ready.",
+      "level": "intermediate",
+      "tags": [
+        "standard",
+        "cncf",
+        "concept",
+        "emerging"
+      ],
+      "estimatedHours": 2,
+      "dependsOn": [
+        "ms-p4"
+      ]
+    },
+    {
+      "id": "new-inference-apis",
+      "phase": "p5",
+      "type": "tool",
+      "title": "Newer inference APIs",
+      "summary": "Watch projects such as Microsoft AI Runway and NVIDIA Grove.",
+      "level": "advanced",
+      "tags": [
+        "inference",
+        "tool",
+        "emerging"
+      ],
+      "estimatedHours": 2,
+      "dependsOn": [
+        "llm-d"
+      ],
+      "optional": true
+    },
+    {
+      "id": "lab-p5",
+      "phase": "p5",
+      "type": "lab",
+      "title": "Lab: sandboxed agent",
+      "summary": "Run an agent in a sandboxed Pod that can only reach your Phase 3 model.",
+      "level": "advanced",
+      "tags": [
+        "agents",
+        "security",
+        "hands-on",
+        "emerging"
+      ],
+      "estimatedHours": 4,
+      "dependsOn": [
+        "agent-sandbox"
+      ]
+    },
+    {
+      "id": "ms-p5",
+      "phase": "p5",
+      "type": "milestone",
+      "title": "Milestone: self-assess conformance",
+      "summary": "Say which AI Conformance requirements your own cluster meets.",
+      "level": "advanced",
+      "tags": [
+        "standard",
+        "hands-on",
+        "emerging"
+      ],
+      "estimatedHours": 1,
+      "dependsOn": [
+        "ai-conformance",
+        "lab-p5",
+        "ai-supply-chain"
+      ]
+    },
+    {
+      "id": "cap-gpu-platform",
+      "phase": "cap",
+      "type": "lab",
+      "title": "Capstone 1: GPU platform",
+      "summary": "GPU nodes managed by the GPU Operator, allocated through DRA.",
+      "level": "advanced",
+      "tags": [
+        "gpu",
+        "hands-on",
+        "core"
+      ],
+      "estimatedHours": 4,
+      "dependsOn": [
+        "ms-p1",
+        "gitops"
+      ]
+    },
+    {
+      "id": "cap-queues",
+      "phase": "cap",
+      "type": "lab",
+      "title": "Capstone 2: team queues",
+      "summary": "Kueue queues for two teams, one fine-tuning, one serving.",
+      "level": "advanced",
+      "tags": [
+        "scheduling",
+        "multi-tenancy",
+        "hands-on",
+        "core"
+      ],
+      "estimatedHours": 4,
+      "dependsOn": [
+        "cap-gpu-platform",
+        "ms-p2"
+      ]
+    },
+    {
+      "id": "cap-fine-tune",
+      "phase": "cap",
+      "type": "lab",
+      "title": "Capstone 3: fine-tune a model",
+      "summary": "Fine-tune a small open model as a queued, checkpointed training job.",
+      "level": "advanced",
+      "tags": [
+        "training",
+        "hands-on",
+        "core"
+      ],
+      "estimatedHours": 6,
+      "dependsOn": [
+        "cap-queues"
+      ]
+    },
+    {
+      "id": "cap-serve",
+      "phase": "cap",
+      "type": "lab",
+      "title": "Capstone 4: serve it",
+      "summary": "Serve the fine-tuned model on vLLM behind the Inference Gateway.",
+      "level": "advanced",
+      "tags": [
+        "inference",
+        "networking",
+        "hands-on",
+        "core"
+      ],
+      "estimatedHours": 5,
+      "dependsOn": [
+        "cap-fine-tune",
+        "ms-p3"
+      ]
+    },
+    {
+      "id": "cap-operate",
+      "phase": "cap",
+      "type": "lab",
+      "title": "Capstone 5: operate it",
+      "summary": "Autoscaling, a Grafana dashboard and a cost-per-request figure.",
+      "level": "advanced",
+      "tags": [
+        "observability",
+        "autoscaling",
+        "cost",
+        "hands-on",
+        "core"
+      ],
+      "estimatedHours": 5,
+      "dependsOn": [
+        "cap-serve",
+        "ms-p4"
+      ]
+    },
+    {
+      "id": "ms-capstone",
+      "phase": "cap",
+      "type": "milestone",
+      "title": "Milestone: rebuild from Git",
+      "summary": "Tear the platform down and rebuild all of it from Git.",
+      "level": "advanced",
+      "tags": [
+        "gitops",
+        "hands-on",
+        "core"
+      ],
+      "estimatedHours": 2,
+      "dependsOn": [
+        "cap-operate"
+      ]
+    }
+  ]
+}

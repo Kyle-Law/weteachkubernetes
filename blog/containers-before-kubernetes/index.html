@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Containers before Kubernetes — We Teach Kubernetes</title>
+<meta name="description" content="Namespaces, cgroups and image layers by hand, so that pod behaviour stops looking like magic and starts looking like Linux.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/containers-before-kubernetes/">
+<link rel="stylesheet" href="../style.css">
+<meta property="og:title" content="Containers before Kubernetes">
+<meta property="og:description" content="Namespaces, cgroups and image layers by hand, so that pod behaviour stops looking like magic and starts looking like Linux.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/containers-before-kubernetes/">
+<meta property="og:type" content="article">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<article><div class="wrap">
+  <div class="kicker">Foundations</div>
+  <h1>Containers before Kubernetes</h1>
+  <p class="dek">Namespaces, cgroups and image layers by hand, so that pod behaviour stops looking like magic and starts looking like Linux.</p>
+  <div class="meta">
+    <span class="m tag">KCNA</span>
+    <span class="m">8 min read</span>
+    <span class="byline">by <a href="https://github.com/Kyle-Law">Kyle Law</a> · 2026-10-08</span>
+  </div>
+  <div class="body">
+      <p>Almost every confusing thing Kubernetes does to a container is something Linux was already doing. If you learn the orchestrator first, you end up memorising behaviour. If you spend an afternoon below it, the same behaviour becomes obvious.</p>
+      <h2>A container is three kernel features and a chroot</h2>
+      <p>There is no <code>container</code> object in the Linux kernel. What you get instead is a process with a restricted view of the system, assembled from namespaces, cgroups and a mounted filesystem. You can build one by hand:</p>
+      <pre><code><span class="c"># a new PID, mount, UTS and network namespace, with a shell inside it</span>
+sudo unshare --pid --mount --uts --net --fork --mount-proc bash
+
+<span class="c"># inside: you are process 1, and you can see almost nothing</span>
+ps aux
+hostname container-by-hand
+ip addr          <span class="c"># just lo - no route out, because nothing was plugged in yet</span></code></pre>
+      <p>That last line is the whole of pod networking in miniature. A fresh network namespace has a loopback interface and nothing else. Something outside has to create a virtual ethernet pair, move one end in, and add routes. On a Kubernetes node, that something is the CNI plugin.</p>
+      <h2>cgroups are why your pod was killed</h2>
+      <p>Namespaces control what a process can <em>see</em>. Control groups control what it can <em>use</em>. On cgroup v2 the interface is a filesystem:</p>
+      <pre><code>sudo mkdir /sys/fs/cgroup/demo
+echo &quot;100M&quot; | sudo tee /sys/fs/cgroup/demo/memory.max
+echo $$    | sudo tee /sys/fs/cgroup/demo/cgroup.procs
+
+<span class="c"># now allocate more than that in this shell and watch what happens</span>
+cat /sys/fs/cgroup/demo/memory.events     <span class="c"># look at oom_kill</span></code></pre>
+      <div class="gotcha"><b>This is the actual mechanism behind OOMKilled.</b> A memory limit in a pod spec becomes <code>memory.max</code> on a cgroup. When the process crosses it, the kernel OOM killer acts — not the kubelet, not the scheduler. That is why the container exits with code 137 and your application logs show nothing: it was not asked to stop.</div>
+      <p>CPU behaves differently, and the difference matters. A CPU limit becomes a quota per period, so exceeding it does not kill anything — it throttles. A pod that is slow but alive is almost always CPU throttling; a pod that dies abruptly is almost always memory.</p>
+      <h2>Images are layers, and layers are a tax</h2>
+      <p>An image is an ordered stack of tarballs plus a JSON manifest. Each instruction in a Dockerfile that changes the filesystem adds a layer, and layers are immutable — so deleting a file in a later layer hides it without reclaiming the space.</p>
+      <pre><code><span class="c"># where the size actually went</span>
+docker history --no-trunc --format &#x27;{{.Size}}\t{{.CreatedBy}}&#x27; your-image:tag | head -20</code></pre>
+      <p>This stops being an aesthetic concern the moment you work on anything with CUDA or a model in it. A 12&nbsp;GB image is 12&nbsp;GB pulled onto every node that has to run it, before your process starts. It is the single most common reason a GPU pod appears to "hang" on first schedule — it is not hanging, it is pulling.</p>
+      <h2>What to actually do with this</h2>
+      <ul><li>Run the <code>unshare</code> command above once. Ten minutes, and network policy later will make sense.</li><li>Put a <code>memory.max</code> on a shell and get OOM-killed deliberately, so you recognise it in production.</li><li>Run <code>docker history</code> on the largest image you own, and find the one layer that is most of it.</li><li>Multi-stage builds: compile in one stage, copy only the artefact into a slim final stage. Usually the single biggest win available.</li></ul>
+      <p>Everything above is a property of Linux, not of Kubernetes. That is the point — it is all still true three abstractions up.</p>
+  </div>
+  <div class="back">
+    <b>This article covers one checkpoint on the roadmap.</b>
+    <a href="https://weteachkubernetes.com/#containers-before-k8s">Open <strong>Containers before Kubernetes</strong> on the roadmap &rarr;</a>
+    — it lists what this depends on and everything else written about it.
+  </div>
+  <p class="fix">Something wrong or out of date?
+    <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=blog%3A%20containers-before-kubernetes">Open an issue</a> — corrections are
+    welcome and get credited.</p>
+</div></article>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>

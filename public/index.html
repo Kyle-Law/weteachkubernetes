@@ -1,0 +1,1572 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>We Teach Kubernetes — a roadmap taught by the people who walked it</title>
+<meta name="description" content="A Kubernetes learning roadmap organised by problem, not by exam
+  syllabus. Every tutorial on it was contributed by someone who had already done the thing.">
+<link rel="canonical" href="https://weteachkubernetes.com/">
+<meta property="og:title" content="We Teach Kubernetes">
+<meta property="og:description" content="A Kubernetes roadmap taught by the people who walked it.">
+<meta property="og:url" content="https://weteachkubernetes.com/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+:root{
+  color-scheme:light;
+  /* Kubernetes Classic: the logo blue, carried by cool blue-grey neutrals. */
+  --brand:#326CE5; --brand-d:#2457C5; --brand-l:#E8EFFD;
+  --teal:#0F8F86; --teal-l:#E0F5F2;          /* the second colour */
+  --warm:#C2761A; --warm-l:#FBF1E2;          /* "nothing here yet" notes */
+  --rose:#B3456B; --rose-l:#FBEBF0;          /* video badges, form errors */
+  --ok:#17795E; --ok-l:#E4F4EC; --ok-b:#8FCBB4;   /* progress, synced states */
+  --ink:#10203A; --muted:#566480; --faint:#8795AE;
+  --bg:#FFFFFF; --bg-2:#F5F8FD; --line:#DCE5F2;
+  --hero:#0E1E38; --hero-muted:#A8B8D4; --hero-accent:#7AA7F5;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--sans); color:var(--ink); background:var(--bg); line-height:1.6;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1280px; margin:0 auto; padding:0 24px}
+a{color:var(--brand)}
+h1,h2,h3{line-height:1.2; margin:0 0 .4em}
+
+/* ---------- concept bar ---------- */
+.cbar{background:#111622; color:#C9D2E0; padding:9px 0; font-size:13px}
+.cbar .wrap{display:flex; gap:14px; align-items:center; flex-wrap:wrap}
+.cbar b{color:#fff; font-weight:600}
+.cbar a{color:#A9B6CA; text-decoration:none}
+.cbar a:hover{color:#fff}
+.cbar a.cur{color:#fff; font-weight:600}
+
+/* ---------- site header: the session lives here, not in a form ---------- */
+.site{border-bottom:1px solid var(--line); background:var(--bg); position:relative; z-index:60}
+.site .wrap{display:flex; align-items:center; gap:14px; padding-block:12px}
+.site .logo{font-weight:700; font-size:15px; text-decoration:none; color:var(--ink);
+  letter-spacing:-.01em}
+.site .logo .k{color:var(--brand)}
+.site .nav{display:flex; gap:16px; font-size:13.5px; margin-left:8px}
+.site .nav a{color:var(--muted); text-decoration:none}
+.site .nav a:hover{color:var(--brand)}
+.site .spacer{flex:1}
+.sess{display:flex; align-items:center; gap:10px}
+.sess .signin{background:#1F2328; color:#fff; border:0; border-radius:8px; padding:8px 13px;
+  font-size:13px; font-weight:600; cursor:pointer}
+.sess .signin:hover{background:#32383F}
+.sess .why{font-size:11.5px; color:var(--faint); max-width:19ch; line-height:1.35}
+.sess .av{width:30px; height:30px; border-radius:99px; background-size:cover; flex:none}
+.sess .nm{font-size:13px; font-weight:600; line-height:1.25}
+.sess .hd{font-family:var(--mono); font-size:11px; color:var(--teal)}
+.sess .out{font-size:11.5px; color:var(--muted); background:none; border:0; cursor:pointer;
+  text-decoration:underline; padding:0}
+.sess .prog{font-family:var(--mono); font-size:11px; background:var(--ok-l); color:var(--ok);
+  border-radius:99px; padding:3px 9px; white-space:nowrap}
+.sess .prog.local{background:var(--bg-2); color:var(--faint)}
+@media(max-width:720px){.site .nav,.sess .why{display:none}}
+
+/* ---------- the merge prompt after signing in ---------- */
+.merge{background:var(--brand-l); border-bottom:1px solid var(--line); font-size:13px;
+  color:var(--brand-d); padding:11px 0}
+.merge .wrap{display:flex; gap:11px; align-items:center; flex-wrap:wrap}
+.merge button{border:0; border-radius:7px; padding:6px 12px; font-size:12.5px; cursor:pointer;
+  font-weight:600}
+.merge .yes{background:var(--brand); color:#fff}
+.merge .no{background:var(--bg); color:var(--muted); border:1px solid var(--line)}
+
+/* ---------- hero with portrait wall ---------- */
+.hero{position:relative; overflow:hidden; background:var(--hero); min-height:min(78vh,620px);
+  display:grid; align-items:center}
+#wall{position:absolute; inset:0; display:grid; gap:3px; padding:3px;
+  grid-template-columns:repeat(auto-fill,minmax(84px,1fr));
+  grid-auto-rows:84px; align-content:start}
+.tile{border-radius:6px; background-size:cover; background-position:center;
+  opacity:.5; transition:opacity .5s ease, transform .5s ease, filter .5s ease; filter:saturate(.75)}
+.tile.swap{opacity:0; transform:scale(.9)}
+.hero .scrim{position:absolute; inset:0;
+  background:radial-gradient(ellipse 80% 65% at 50% 48%, rgba(14,30,56,.93) 0%, rgba(14,30,56,.82) 45%, rgba(14,30,56,.45) 100%)}
+.hero .inner{position:relative; z-index:2; padding:72px 0; text-align:center}
+.hero h1{font-size:clamp(2rem,7.5vw,5rem); letter-spacing:-.02em; color:#fff; margin:0;
+  text-transform:uppercase; font-weight:800}
+.hero h1 .k{color:var(--hero-accent)}
+.hero .tag{color:var(--hero-muted); font-size:clamp(1rem,2.4vw,1.3rem); max-width:36ch; margin:18px auto 0}
+.herostats{display:flex; gap:0; justify-content:center; flex-wrap:wrap; margin-top:34px}
+.herostats div{padding:0 22px; border-left:1px solid rgba(255,255,255,.16); color:#9FAABD; font-size:12.5px;
+  letter-spacing:.04em; text-transform:uppercase}
+.herostats div:first-child{border-left:0}
+.herostats b{display:block; font-family:var(--mono); font-size:26px; color:#fff; letter-spacing:-.01em;
+  text-transform:none}
+.ticker{margin-top:30px; font-size:13.5px; color:#8E9AAE; font-family:var(--mono); min-height:1.5em}
+.ticker b{color:var(--hero-muted); font-weight:500}
+.herobtns{margin-top:30px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap}
+.btn{display:inline-block; background:var(--brand); color:#fff; text-decoration:none; font-weight:600;
+  padding:11px 20px; border-radius:8px; font-size:15px; border:0; cursor:pointer}
+.btn:hover{background:var(--brand-d)}
+.btn-ghost{background:transparent; color:#fff; border:1px solid rgba(255,255,255,.35)}
+.btn-ghost:hover{background:rgba(255,255,255,.1)}
+.gennote{position:absolute; bottom:8px; right:12px; z-index:3; font-size:10.5px; color:rgba(255,255,255,.4);
+  font-family:var(--mono)}
+
+/* ---------- sections ---------- */
+section{padding-block:56px}
+.sechead{max-width:62ch; margin-bottom:28px}
+.eyebrow{font-family:var(--mono); font-size:11.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--brand); margin-bottom:10px}
+.sechead h2{font-size:clamp(1.4rem,3vw,2rem)}
+.sechead p{color:var(--muted); margin:0}
+.alt{background:var(--bg-2); border-block:1px solid var(--line)}
+
+/* ---------- filter ---------- */
+.filterbar{position:sticky; top:0; z-index:80; background:rgba(255,255,255,.94);
+  backdrop-filter:blur(8px); border-bottom:1px solid var(--line); padding-block:12px}
+.frow{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+.flabel{font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--faint); margin-right:2px}
+.chip{border:1px solid var(--line); background:var(--bg); color:var(--muted); border-radius:99px;
+  padding:5px 13px; font-size:13px; font-family:var(--mono); cursor:pointer; line-height:1.4}
+.chip:hover{border-color:var(--brand); color:var(--brand)}
+.chip.on{background:var(--brand); border-color:var(--brand); color:#fff}
+.chip.topic.on{background:var(--teal); border-color:var(--teal)}
+.chip.clear{font-family:var(--sans); border-style:dashed}
+.mode{margin-left:auto; display:flex; gap:6px; align-items:center; font-size:12.5px; color:var(--muted)}
+.mode button{border:1px solid var(--line); background:var(--bg); color:var(--muted); font-size:12px;
+  padding:4px 10px; border-radius:6px; cursor:pointer; font-family:var(--mono)}
+.mode button.on{background:var(--ink); color:#fff; border-color:var(--ink)}
+.summary{margin-top:11px; font-size:13.5px; color:var(--muted)}
+.summary b{font-family:var(--mono); color:var(--ink)}
+.summary .none{color:var(--rose)}
+@media(max-width:700px){.mode{margin-left:0; width:100%}}
+
+/* ---------- progress ticks on the list ---------- */
+.tick{width:22px; height:22px; border-radius:99px; border:1.5px solid var(--line); background:var(--bg);
+  display:grid; place-items:center; font-size:11px; color:transparent; cursor:pointer; flex:none;
+  position:absolute; right:38px; top:50%; transform:translateY(-50%)}
+.tick:hover{border-color:var(--ok); color:var(--ok-b)}
+.cp.done .tick{background:var(--ok); border-color:var(--ok); color:#fff}
+.cp.done h4{color:var(--muted); text-decoration:line-through}
+.cp.done .step{background:var(--ok-l); color:var(--ok)}
+.synced{font-family:var(--mono); font-size:10.5px; color:var(--ok); margin-left:7px}
+
+/* ---------- two columns ---------- */
+.cols{display:grid; grid-template-columns:minmax(0,1fr) 420px; gap:30px; align-items:start}
+@media(max-width:1040px){.cols{grid-template-columns:minmax(0,1fr)}}
+
+/* ---------- roadmap ---------- */
+.stage{margin-bottom:40px}
+.stage.hidden{display:none}
+.stagehead{display:flex; gap:12px; align-items:baseline; border-bottom:2px solid var(--ink);
+  padding-bottom:8px; margin-bottom:4px}
+.stagehead h3{font-size:1.15rem; margin:0}
+.stagehead .sb{color:var(--muted); font-size:13.5px}
+.stagehead .count{margin-left:auto; font-family:var(--mono); font-size:12px; color:var(--faint); white-space:nowrap}
+.cp{border-bottom:1px solid var(--line); padding:14px 14px 14px 56px; position:relative;
+  cursor:pointer; border-radius:9px}
+.cp:hover{background:var(--bg-2)}
+.cp.cur{background:var(--brand-l); box-shadow:inset 0 0 0 1px var(--brand); border-bottom-color:transparent}
+.cp.hidden{display:none}
+.cp .step{position:absolute; left:8px; top:14px; width:34px; height:34px; border-radius:99px;
+  display:grid; place-items:center; background:var(--brand-l); color:var(--brand-d);
+  font-family:var(--mono); font-weight:700; font-size:13px}
+.cp.cur .step{background:var(--brand); color:#fff}
+.cp h4{font-size:1.02rem; margin:0 0 6px}
+.cp .go{position:absolute; right:13px; top:50%; transform:translateY(-50%); color:var(--faint);
+  font-size:13px}
+.cp:hover .go,.cp.cur .go{color:var(--brand)}
+.cpmeta{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+.t{font-family:var(--mono); font-size:11px; padding:2px 8px; border-radius:99px; letter-spacing:.03em}
+.t.cert{background:var(--brand-l); color:var(--brand-d)}
+.t.topic{background:var(--teal-l); color:var(--teal)}
+.t.hit{outline:2px solid currentColor; outline-offset:1px}
+.hrs{font-family:var(--mono); font-size:11.5px; color:var(--faint); margin-left:auto}
+.res{display:grid; gap:7px}
+.r{display:flex; gap:11px; align-items:center; text-decoration:none; color:inherit;
+  border:1px solid var(--line); border-radius:9px; padding:9px 12px; background:var(--bg)}
+.r:hover{border-color:var(--brand); background:var(--brand-l)}
+.r .av{width:30px; height:30px; border-radius:99px; background-size:cover; flex:none}
+.r .rt{flex:1; min-width:0}
+.r .rt .ti{font-size:14.5px; font-weight:600; color:var(--ink)}
+.r .rt .by{font-size:12.5px; color:var(--muted)}
+.kind{font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.06em;
+  padding:3px 7px; border-radius:5px; flex:none}
+.kind.article{background:var(--brand-l); color:var(--brand-d)}
+.kind.video{background:var(--rose-l); color:var(--rose)}
+.kind.lab{background:var(--warm-l); color:var(--warm)}
+.kind.repo{background:var(--teal-l); color:var(--teal)}
+.mins{font-family:var(--mono); font-size:11.5px; color:var(--faint); flex:none}
+.addcp{display:block; text-align:center; border:1px dashed var(--line); border-radius:9px;
+  padding:11px; font-size:13.5px; color:var(--muted); text-decoration:none; margin-top:9px}
+.addcp:hover{border-color:var(--brand); color:var(--brand)}
+
+/* ---------- sign in with github ---------- */
+.auth{border:1px solid var(--line); border-radius:10px; padding:12px; background:var(--bg-2)}
+.auth.in{background:var(--teal-l); border-color:#9CD3CC}
+.ghbtn{display:block; width:100%; background:#1F2328; color:#fff; border:0; border-radius:8px;
+  padding:10px 14px; font-size:13.5px; font-weight:600; cursor:pointer}
+.ghbtn:hover{background:#32383F}
+.ghnote{font-size:11.5px; color:var(--muted); margin:9px 0 0; line-height:1.5}
+.ghnote b{color:var(--ink)}
+.me{display:flex; gap:10px; align-items:center}
+.me .av{width:34px; height:34px; border-radius:99px; background-size:cover; flex:none}
+.me .nm{font-size:13.5px; font-weight:600}
+.me .hd{font-family:var(--mono); font-size:11.5px; color:var(--teal)}
+.me .out{margin-left:auto; font-size:12px; color:var(--muted); background:none; border:0;
+  cursor:pointer; text-decoration:underline; padding:0}
+.redir{font-family:var(--mono); font-size:10.5px; color:var(--muted); word-break:break-all;
+  line-height:1.6}
+.sim{font-size:11.5px; color:var(--faint); margin:9px 0 0}
+.sim button{font-size:11.5px; background:none; border:0; color:var(--brand); cursor:pointer;
+  text-decoration:underline; padding:0}
+
+/* ---------- the contribute form ---------- */
+.addf{display:grid; gap:11px}
+.addf label{display:block; font-size:12px; color:var(--muted); font-weight:600}
+.addf input,.addf select{width:100%; margin-top:4px; border:1px solid var(--line); border-radius:8px;
+  padding:8px 10px; font-size:13.5px; font-family:inherit; color:var(--ink); background:var(--bg)}
+.addf input:focus,.addf select:focus{outline:2px solid var(--brand-l); border-color:var(--brand)}
+.addf input.bad{border-color:var(--rose); background:var(--rose-l)}
+.fr2{display:grid; grid-template-columns:1fr 92px; gap:10px}
+.addf .opt{font-weight:400; color:var(--faint); text-transform:none}
+.chk{display:flex!important; gap:8px; align-items:flex-start; font-weight:400!important;
+  font-size:12.5px!important; line-height:1.45}
+.chk input{width:auto!important; margin:2px 0 0!important; flex:none}
+.newc{display:grid; gap:11px; border-left:2px solid var(--brand-l); padding-left:11px}
+.fnote{font-size:11.5px; color:var(--faint); margin:0}
+.err{font-size:12.5px; color:var(--rose); margin:0}
+.sent{border:1px solid var(--teal); background:var(--teal-l); border-radius:10px; padding:14px}
+.sent h4{margin:0 0 6px; font-size:14.5px; color:#0B6B63}
+.sent p{margin:0 0 9px; font-size:13px; color:#0B6B63}
+.sent pre{margin-top:9px}
+.wire{font-family:var(--mono); font-size:11px; color:var(--faint); margin-top:9px; line-height:1.7}
+.wire b{color:var(--muted); font-weight:600}
+
+/* ---------- second column: the detail panel ---------- */
+.panel{position:sticky; top:86px; border:1px solid var(--line); border-radius:13px; background:var(--bg);
+  max-height:calc(100vh - 112px); overflow:auto}
+.pbody{padding:20px}
+.crumb{font-family:var(--mono); font-size:11px; color:var(--faint); letter-spacing:.05em;
+  text-transform:uppercase; margin-bottom:9px}
+.panel h2{font-size:1.3rem; margin:0 0 11px; line-height:1.25}
+.pmeta{display:flex; gap:7px; flex-wrap:wrap; align-items:center; margin-bottom:15px}
+.pm{font-family:var(--mono); font-size:11px; background:var(--bg-2); border-radius:5px; padding:2px 7px;
+  color:var(--muted)}
+.pm.id{background:var(--ink); color:#fff; cursor:copy}
+.psum{font-size:15px; color:var(--ink); margin:0 0 18px}
+.blk{margin-bottom:20px}
+.blk .h{font-family:var(--mono); font-size:10.5px; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--faint); margin-bottom:9px; display:flex; align-items:center; gap:7px}
+.blk .h i{flex:1; height:1px; background:var(--line)}
+.nothing{border-left:3px solid var(--warm); background:var(--warm-l); padding:11px 13px;
+  border-radius:0 8px 8px 0; font-size:13.5px; color:#5E4413}
+pre{background:#101522; color:#D7E0EE; border-radius:9px; padding:13px; overflow:auto;
+  font-family:var(--mono); font-size:11.5px; line-height:1.6; margin:0}
+.pbtns{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+.pbtn{background:var(--brand); color:#fff; border:0; border-radius:8px; padding:9px 15px;
+  font-size:13.5px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block}
+.pbtn:hover{background:var(--brand-d)}
+.pbtn.sec{background:var(--bg); color:var(--ink); border:1px solid var(--line)}
+.pbtn.sec:hover{background:var(--bg-2)}
+.nosel{color:var(--muted); font-size:14.5px; padding:34px 6px; text-align:center}
+.nosel .big{font-size:32px; margin-bottom:10px; color:var(--brand)}
+.nosel b{color:var(--ink)}
+.pclose{display:none}
+@media(max-width:1040px){
+  .panel{position:fixed; inset:auto 0 0 0; z-index:120; max-height:85vh; border-radius:14px 14px 0 0;
+    box-shadow:0 -10px 40px rgba(10,16,32,.25); transform:translateY(102%); transition:transform .22s ease}
+  .panel.up{transform:translateY(0)}
+  .pclose{display:block; position:sticky; top:0; background:var(--bg); border-bottom:1px solid var(--line);
+    padding:10px 15px; text-align:right}
+  .pclose button{border:0; background:var(--bg-2); border-radius:7px; padding:6px 13px; cursor:pointer;
+    font-size:13px; color:var(--muted)}
+  .nosel{display:none}
+}
+.empty{text-align:center; padding:50px 20px; color:var(--muted)}
+@media(max-width:640px){
+  .cp{padding-left:0} .cp .step{position:static; margin-bottom:10px}
+  .r .mins{display:none}
+}
+
+/* ---------- people ---------- */
+.people{display:grid; gap:12px; grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.p{border:1px solid var(--line); border-radius:11px; padding:14px; background:var(--bg)}
+.p .top{display:flex; gap:11px; align-items:center}
+.p .av{width:46px; height:46px; border-radius:99px; background-size:cover; flex:none}
+.p .nm{font-weight:600; font-size:14.5px}
+.p .ti{font-size:12.5px; color:var(--muted)}
+.p .loc{font-family:var(--mono); font-size:11.5px; color:var(--faint); margin-top:9px}
+.p .lk{display:flex; gap:9px; margin-top:9px; font-size:12px}
+.p .lk a{text-decoration:none; font-family:var(--mono)}
+.p .cnt{font-family:var(--mono); font-size:11.5px; color:var(--warm); margin-top:7px}
+
+/* ---------- code / how to ---------- */
+.two{display:grid; gap:26px; grid-template-columns:1fr 1fr; align-items:start}
+@media(max-width:800px){.two{grid-template-columns:1fr}}
+pre{background:#101522; color:#D7E0EE; border-radius:11px; padding:16px; overflow:auto;
+  font-family:var(--mono); font-size:12.5px; line-height:1.65; margin:0}
+pre .c{color:#7E8CA8} pre .s{color:#9BD9A8} pre .k{color:var(--hero-accent)}
+ol.steps{counter-reset:s; list-style:none; padding:0; margin:0}
+ol.steps li{counter-increment:s; position:relative; padding-left:34px; margin-bottom:13px;
+  font-size:14.5px; color:var(--muted)}
+ol.steps li::before{content:counter(s); position:absolute; left:0; top:1px; width:23px; height:23px;
+  border-radius:99px; background:var(--ink); color:#fff; font-family:var(--mono); font-size:12px;
+  display:grid; place-items:center}
+ol.steps li b{color:var(--ink)}
+.note{border-left:3px solid var(--warm); background:var(--warm-l); padding:13px 16px; border-radius:0 9px 9px 0;
+  font-size:14px; color:#5E4413; margin-top:22px}
+.note b{color:#3F2D08}
+footer{border-top:1px solid var(--line); padding-block:30px; color:var(--faint); font-size:13px}
+</style>
+</head>
+<body>
+
+
+
+<div class="site"><div class="wrap">
+  <a class="logo" href="#">we<span class="k">teach</span>kubernetes</a>
+  <nav class="nav"><a href="#path">Roadmap</a><a href="#contributors">Contributors</a>
+    <a href="#contribute">Contribute</a></nav>
+  <span class="spacer"></span>
+  <div class="sess" id="sess"></div>
+</div></div>
+<div class="merge" id="mergebar" hidden><div class="wrap"></div></div>
+
+<div class="hero">
+  <div id="wall" aria-hidden="true"></div>
+  <div class="scrim"></div>
+  <div class="inner"><div class="wrap">
+    <h1>We Teach <span class="k">Kubernetes</span></h1>
+    <p class="tag">A Kubernetes roadmap organised by problem rather than by exam syllabus.
+    Click any checkpoint to see what is inside it.</p>
+    <div class="herostats">
+      <div><b id="s-people">—</b>contributors</div>
+      <div><b id="s-res">—</b>tutorials</div>
+      <div><b id="s-cp">—</b>checkpoints</div>
+      <div><b id="s-hrs">—</b>hours of path</div>
+    </div>
+    <div class="ticker" id="ticker"></div>
+    <div class="herobtns">
+      <a class="btn" href="#path">Build my path</a>
+      <a class="btn btn-ghost" href="#contribute">Add your tutorial</a>
+    </div>
+  </div></div>
+</div>
+
+<div class="filterbar" id="path"><div class="wrap">
+  <div class="frow" id="chips"></div>
+  <div class="summary" id="summary"></div>
+</div></div>
+
+<section><div class="wrap">
+  <div class="cols">
+    <div id="roadmap"></div>
+    <aside class="panel" id="panel">
+      <div class="pclose"><button id="pc">close</button></div>
+      <div class="pbody" id="pbody"></div>
+    </aside>
+  </div>
+</div></section>
+
+<section class="alt" id="contributors"><div class="wrap">
+  <div class="sechead">
+    <div class="eyebrow">Taught by real people</div>
+    <h2>Everyone whose name is on this roadmap</h2>
+    <p>Each card is one object in <code>data/contributors.json</code>. The portrait is generated from the
+    handle, so nobody has to upload a photo to take part — and the LinkedIn link is optional.</p>
+  </div>
+  <div class="people" id="people"></div>
+</div></section>
+
+<section id="contribute"><div class="wrap">
+  <div class="sechead">
+    <div class="eyebrow">How the content gets here</div>
+    <h2>Read freely. Sign in only to write.</h2>
+    <p>Every node, every tutorial and every contributor page is public, indexable and linkable with
+    no account — a recruiter or a reviewer following a link sees all of it. An account is needed
+    only for the handful of things that write something down.</p>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:20px; font-size:13.5px">
+      <div><b style="display:block; margin-bottom:6px">No account</b>
+        <span style="color:var(--muted)">The roadmap and all node content · community tutorials and
+        their authors · contributor profiles · search, filters and deep links · progress kept on
+        this device</span></div>
+      <div><b style="display:block; margin-bottom:6px">Sign in with GitHub</b>
+        <span style="color:var(--muted)">Submitting a tutorial · reporting a dead link · flagging
+        something outdated · progress that follows you between devices · joining a peer
+        cohort</span></div>
+    </div>
+  </div>
+  <div class="two">
+    <div>
+      <ol class="steps">
+        <li><b>Sign in with GitHub.</b> The authorize screen asks for nothing — the scope is empty,
+            which grants public profile data and no repository access whatsoever.</li>
+        <li><b>Fill in the form</b> on any checkpoint: kind, title, link, minutes. Your handle is not
+            a field, because it comes from the session rather than from anything you can type.</li>
+        <li><b>The Worker validates and commits</b> — appends one object to
+            <code>data/roadmap.json</code> on a new branch, with a
+            <code>Co-authored-by</code> trailer using your GitHub noreply address.</li>
+        <li><b>A maintainer merges.</b> The site rebuilds, your name appears on the checkpoint and in
+            the contributors wall, and the commit counts on your profile.</li>
+      </ol>
+      <div class="note"><b>One rule that gets a PR closed:</b> no exam content. Teach the subject,
+      never the questions.</div>
+      <p style="font-size:13.5px; color:var(--muted); margin-top:18px">
+        Prefer Git? Nothing stops you. The form is a convenience on top of two plain JSON files —
+        a hand-written PR against them is reviewed exactly the same way.</p>
+    </div>
+    <div>
+      <pre><span class="c">// 1. the sign-in redirect — note the empty scope</span>
+<span class="k">GET</span> github.com/login/oauth/authorize
+  ?client_id=<span class="s">$GITHUB_CLIENT_ID</span>
+  &amp;redirect_uri=<span class="s">https://…/api/auth/callback</span>
+  &amp;scope=                <span class="c">// nothing at all</span>
+  &amp;state=<span class="s">$RANDOM</span>         <span class="c">// CSRF, checked on return</span>
+
+<span class="c">// 2. the callback, server side only</span>
+<span class="k">POST</span> github.com/login/oauth/access_token
+  { client_id, <span class="s">client_secret</span>, code, state }
+<span class="c">   // client_secret is a Worker secret and never
+   // reaches a browser. Read login + id, discard the
+   // token, set an httpOnly SameSite=Lax cookie.</span>
+
+<span class="c">// 3. progress, the one write most people want</span>
+<span class="k">PUT</span> /api/progress      <span class="c">// signed in</span>
+Cookie: wtk_session=…
+{ <span class="k">"done"</span>: [<span class="s">"object-model"</span>, <span class="s">"network-policy"</span>] }
+<span class="c">// anonymous? it stays in localStorage, and on first
+// sign-in the site offers to merge rather than
+// silently overwrite either side.</span>
+
+<span class="c">// 4. the submission — no handle in the body</span>
+<span class="k">POST</span> /api/contribute
+Cookie: wtk_session=…
+{ <span class="k">"checkpoint"</span>: <span class="s">"network-policy"</span>,
+  <span class="k">"resource"</span>: { type, title, url, minutes } }
+
+<span class="c">// 5. what the Worker does, in order</span>
+1. <span class="k">session</span>  verify cookie, resolve handle + id
+2. <span class="k">validate</span> https URL, HEAD 200, checkpoint exists,
+            lengths capped, no HTML
+3. <span class="k">limit</span>    max 5 open PRs per handle
+4. <span class="k">read</span>     data/roadmap.json + its blob sha
+5. <span class="k">append</span>   one resource, by = session handle
+6. <span class="k">commit</span>   GitHub App installation token, trailer
+            <span class="s">Co-authored-by: Name &lt;id+login@users.noreply.github.com&gt;</span>
+7. <span class="k">pull</span>     open the PR  <span class="c">// never auto-merge</span></pre>
+      <div class="note" style="margin-top:16px"><b>Why the site still opens the PR, rather than you:</b>
+      having the PR authored by your own account would need write scope on your repositories, and
+      most people are right to decline that for a one-paragraph contribution. The co-author trailer
+      gets the profile credit without the site ever being able to touch your account.</div>
+    </div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <p style="margin:0 0 6px">weteachkubernetes.com — the roadmap and every tutorial on it live in
+  <a href="https://github.com/Kyle-Law/weteachkubernetes">a public repo</a>. Contributions welcome.</p>
+  <p style="margin:0">Portraits are generated in the browser from each GitHub handle; they are not
+  photographs. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA and CKNE.</p>
+</div></footer>
+
+<script type="application/json" id="d-contrib">{
+  "_note": "Real contributor records. One object per person, keyed by `handle` = GitHub username.",
+  "_how_to_add_yourself": [
+    "1. Append one object to `people`, keep the array sorted by `handle`.",
+    "2. `handle` must equal your GitHub username - it is the join key used by roadmap.json.",
+    "3. `photo` and `linkedin` are optional. Leave them null and a portrait is generated from your handle.",
+    "4. Open a PR titled `contributor: <handle>`."
+  ],
+  "people": [
+    {
+      "handle": "Kyle-Law",
+      "name": "Kyle Law",
+      "pronouns": "he/him",
+      "title": "Kubestronaut · maintainer of this roadmap",
+      "location": "Malaysia",
+      "tz": "UTC+8",
+      "photo": null,
+      "github": "https://github.com/Kyle-Law",
+      "linkedin": null,
+      "certs": [
+        "CKA",
+        "CKAD",
+        "CKS",
+        "KCNA",
+        "KCSA"
+      ],
+      "teaches": [
+        "Security",
+        "Networking",
+        "Inference"
+      ],
+      "joined": "2026-10-08"
+    }
+  ]
+}</script>
+<script type="application/json" id="d-roadmap">{
+  "_note": "The roadmap structure. Tutorials live in each checkpoint's `resources` array and arrive as pull requests.",
+  "_schema": "https://weteachkubernetes.com/schema/roadmap-v1.json",
+  "_how_to_add_a_tutorial": [
+    "1. Find the checkpoint your tutorial belongs to. Do not invent a new checkpoint for a tutorial.",
+    "2. Append one object to that checkpoint's `resources`.",
+    "3. `by` must be a `handle` that exists in contributors.json. Add yourself there in the same PR if you are new.",
+    "4. `type` is one of: article, video, lab, repo.",
+    "5. `minutes` is honest reading/watching time, not aspirational.",
+    "6. Never add a resource that restates exam questions. The Linux Foundation NDA applies and the PR will be closed.",
+    "7. Open a PR titled `tutorial: <checkpoint-id>`. One checkpoint per PR keeps review fast."
+  ],
+  "updated": "2026-10-08",
+  "tags": [
+    {
+      "id": "KCNA",
+      "label": "KCNA",
+      "kind": "cert",
+      "note": "Kubernetes and Cloud Native Associate"
+    },
+    {
+      "id": "CKAD",
+      "label": "CKAD",
+      "kind": "cert",
+      "note": "Application Developer"
+    },
+    {
+      "id": "CKA",
+      "label": "CKA",
+      "kind": "cert",
+      "note": "Administrator"
+    },
+    {
+      "id": "CKS",
+      "label": "CKS",
+      "kind": "cert",
+      "note": "Security Specialist"
+    },
+    {
+      "id": "KCSA",
+      "label": "KCSA",
+      "kind": "cert",
+      "note": "Security Associate"
+    },
+    {
+      "id": "CKNE",
+      "label": "CKNE",
+      "kind": "cert",
+      "note": "Network Engineer (beta)"
+    },
+    {
+      "id": "Inference",
+      "label": "Inference",
+      "kind": "topic",
+      "note": "Serving models on Kubernetes"
+    },
+    {
+      "id": "Scheduling",
+      "label": "Scheduling",
+      "kind": "topic",
+      "note": "Placement, priority, GPUs, autoscaling"
+    },
+    {
+      "id": "Networking",
+      "label": "Networking",
+      "kind": "topic",
+      "note": "CNI, mesh, Gateway API"
+    },
+    {
+      "id": "Security",
+      "label": "Security",
+      "kind": "topic",
+      "note": "Policy, supply chain, runtime"
+    },
+    {
+      "id": "Observability",
+      "label": "Observability",
+      "kind": "topic",
+      "note": "Metrics, traces, eBPF"
+    },
+    {
+      "id": "GitOps",
+      "label": "GitOps",
+      "kind": "topic",
+      "note": "Declarative delivery"
+    }
+  ],
+  "stages": [
+    {
+      "id": "foundations",
+      "title": "Foundations",
+      "blurb": "Enough of the object model that everything later has somewhere to attach.",
+      "checkpoints": [
+        {
+          "id": "containers-before-k8s",
+          "title": "Containers before Kubernetes",
+          "summary": "Namespaces, cgroups and image layers by hand, so that pod behaviour stops looking like magic.",
+          "tags": [
+            "KCNA"
+          ],
+          "hours": 4,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Containers before Kubernetes",
+              "url": "https://blog.weteachkubernetes.com/containers-before-kubernetes/",
+              "by": "Kyle-Law",
+              "minutes": 8,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "object-model",
+          "title": "The API object model",
+          "summary": "Why everything is a resource, what the control loop actually does, and how to read any CRD you meet later.",
+          "tags": [
+            "KCNA",
+            "CKAD"
+          ],
+          "hours": 5,
+          "resources": [
+            {
+              "type": "article",
+              "title": "The API object model",
+              "url": "https://blog.weteachkubernetes.com/the-api-object-model/",
+              "by": "Kyle-Law",
+              "minutes": 9,
+              "added": "2026-10-08"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "workloads",
+      "title": "Workloads and configuration",
+      "blurb": "Getting your own software to run, survive a restart and be configurable without a rebuild.",
+      "checkpoints": [
+        {
+          "id": "deployments-probes",
+          "title": "Deployments, probes and rollouts",
+          "summary": "Rolling updates that do not drop traffic, and the three probes people keep confusing.",
+          "tags": [
+            "CKAD",
+            "CKA"
+          ],
+          "hours": 6,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Deployments, probes and rollouts",
+              "url": "https://blog.weteachkubernetes.com/deployments-probes-and-rollouts/",
+              "by": "Kyle-Law",
+              "minutes": 10,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "config-secrets",
+          "title": "Config, secrets and the twelve-factor edge cases",
+          "summary": "ConfigMap reload behaviour, projected volumes, and why your secret is base64 and not encrypted.",
+          "tags": [
+            "CKAD",
+            "Security"
+          ],
+          "hours": 4,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Config, secrets and the twelve-factor edge cases",
+              "url": "https://blog.weteachkubernetes.com/config-secrets-and-the-edge-cases/",
+              "by": "Kyle-Law",
+              "minutes": 8,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "gitops-delivery",
+          "title": "Declarative delivery",
+          "summary": "Kustomize overlays and a pull-based reconciler, so environments stop drifting silently.",
+          "tags": [
+            "GitOps",
+            "CKAD"
+          ],
+          "hours": 7,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Declarative delivery",
+              "url": "https://blog.weteachkubernetes.com/declarative-delivery/",
+              "by": "Kyle-Law",
+              "minutes": 9,
+              "added": "2026-10-08"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "operate",
+      "title": "Running a cluster",
+      "blurb": "The part where it is your pager. Control plane internals, upgrades, and recovering from your own mistakes.",
+      "checkpoints": [
+        {
+          "id": "control-plane",
+          "title": "Control plane components and etcd",
+          "summary": "What each component owns, plus a real backup and restore of etcd on a cluster you can throw away.",
+          "tags": [
+            "CKA"
+          ],
+          "hours": 8,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Control plane components and etcd",
+              "url": "https://blog.weteachkubernetes.com/control-plane-and-etcd/",
+              "by": "Kyle-Law",
+              "minutes": 11,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "rbac-tenancy",
+          "title": "RBAC and multi-tenancy",
+          "summary": "Roles that are actually least-privilege, and the three places tenancy leaks anyway.",
+          "tags": [
+            "CKA",
+            "Security",
+            "KCSA"
+          ],
+          "hours": 5,
+          "resources": [
+            {
+              "type": "article",
+              "title": "RBAC and multi-tenancy",
+              "url": "https://blog.weteachkubernetes.com/rbac-and-multi-tenancy/",
+              "by": "Kyle-Law",
+              "minutes": 10,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "troubleshoot",
+          "title": "Troubleshooting under time pressure",
+          "summary": "A fixed order of operations for a broken cluster, so you stop guessing when it matters.",
+          "tags": [
+            "CKA",
+            "Observability"
+          ],
+          "hours": 6,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Troubleshooting under time pressure",
+              "url": "https://blog.weteachkubernetes.com/troubleshooting-under-time-pressure/",
+              "by": "Kyle-Law",
+              "minutes": 9,
+              "added": "2026-10-08"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "networking",
+      "title": "Networking",
+      "blurb": "Where most senior interviews go, and where the CKNE lives. Packets, policy and the mesh question.",
+      "checkpoints": [
+        {
+          "id": "pod-networking",
+          "title": "Pod networking from first principles",
+          "summary": "Follow a packet from one pod to another across nodes, then do it again with the CNI removed.",
+          "tags": [
+            "CKNE",
+            "Networking",
+            "CKA"
+          ],
+          "hours": 7,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Pod networking from first principles",
+              "url": "https://blog.weteachkubernetes.com/pod-networking-from-first-principles/",
+              "by": "Kyle-Law",
+              "minutes": 12,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "network-policy",
+          "title": "Network policy that someone can debug",
+          "summary": "Default-deny without taking production down, and proving the policy does what you claimed.",
+          "tags": [
+            "CKNE",
+            "Networking",
+            "CKS",
+            "Security"
+          ],
+          "hours": 6,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Network policy that someone can debug",
+              "url": "https://blog.weteachkubernetes.com/network-policy-you-can-debug/",
+              "by": "Kyle-Law",
+              "minutes": 10,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "gateway-mesh",
+          "title": "Gateway API and the mesh decision",
+          "summary": "Ingress to Gateway API migration, and an honest list of what a mesh costs you.",
+          "tags": [
+            "CKNE",
+            "Networking"
+          ],
+          "hours": 8,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Gateway API and the mesh decision",
+              "url": "https://blog.weteachkubernetes.com/gateway-api-and-the-mesh-decision/",
+              "by": "Kyle-Law",
+              "minutes": 11,
+              "added": "2026-10-08"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "title": "Security",
+      "blurb": "Supply chain, admission and runtime. The CKS track, plus the parts no exam covers.",
+      "checkpoints": [
+        {
+          "id": "admission-policy",
+          "title": "Admission control and policy as code",
+          "summary": "Pod Security Admission, then a policy engine for the rules PSA cannot express.",
+          "tags": [
+            "CKS",
+            "Security",
+            "KCSA"
+          ],
+          "hours": 7,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Admission control and policy as code",
+              "url": "https://blog.weteachkubernetes.com/admission-control-and-policy-as-code/",
+              "by": "Kyle-Law",
+              "minutes": 10,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "supply-chain",
+          "title": "Supply chain and image provenance",
+          "summary": "Signing, verifying and actually failing closed when verification fails.",
+          "tags": [
+            "CKS",
+            "Security"
+          ],
+          "hours": 6,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Supply chain and image provenance",
+              "url": "https://blog.weteachkubernetes.com/supply-chain-and-image-provenance/",
+              "by": "Kyle-Law",
+              "minutes": 9,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "runtime-detect",
+          "title": "Runtime detection and response",
+          "summary": "Seeing a container do something it should not, and having a plan for the next ten minutes.",
+          "tags": [
+            "CKS",
+            "Security",
+            "Observability"
+          ],
+          "hours": 6,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Runtime detection and response",
+              "url": "https://blog.weteachkubernetes.com/runtime-detection-and-response/",
+              "by": "Kyle-Law",
+              "minutes": 9,
+              "added": "2026-10-08"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "inference",
+      "title": "AI inference and GPUs",
+      "blurb": "No certification covers this yet, which is exactly why it is worth writing down.",
+      "checkpoints": [
+        {
+          "id": "gpu-scheduling",
+          "title": "Getting a GPU into a pod",
+          "summary": "Device plugin, drivers, and the difference between MIG partitioning and time-slicing when cost matters.",
+          "tags": [
+            "Inference",
+            "Scheduling"
+          ],
+          "hours": 8,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Getting a GPU into a pod",
+              "url": "https://blog.weteachkubernetes.com/getting-a-gpu-into-a-pod/",
+              "by": "Kyle-Law",
+              "minutes": 11,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "serving-llms",
+          "title": "Serving a model like a production service",
+          "summary": "vLLM or KServe behind a Gateway, with readiness that reflects model load rather than process start.",
+          "tags": [
+            "Inference",
+            "Networking"
+          ],
+          "hours": 10,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Serving a model like a production service",
+              "url": "https://blog.weteachkubernetes.com/serving-a-model-like-a-production-service/",
+              "by": "Kyle-Law",
+              "minutes": 12,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "inference-scale",
+          "title": "Scaling inference on real traffic",
+          "summary": "Queue-depth autoscaling, cold starts measured in minutes, and the bill as a design constraint.",
+          "tags": [
+            "Inference",
+            "Scheduling",
+            "Observability"
+          ],
+          "hours": 9,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Scaling inference on real traffic",
+              "url": "https://blog.weteachkubernetes.com/scaling-inference-on-real-traffic/",
+              "by": "Kyle-Law",
+              "minutes": 11,
+              "added": "2026-10-08"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "platform",
+      "title": "Platform and scale",
+      "blurb": "What changes when other teams depend on you and nobody reads your docs.",
+      "checkpoints": [
+        {
+          "id": "capacity",
+          "title": "Capacity, bin-packing and autoscaling",
+          "summary": "Requests and limits chosen from data, plus node autoscaling that does not thrash.",
+          "tags": [
+            "Scheduling",
+            "CKA"
+          ],
+          "hours": 7,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Capacity, bin-packing and autoscaling",
+              "url": "https://blog.weteachkubernetes.com/capacity-bin-packing-and-autoscaling/",
+              "by": "Kyle-Law",
+              "minutes": 10,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "slo-observability",
+          "title": "SLOs people actually use",
+          "summary": "Three signals per service, one dashboard, and alerts that correspond to someone being paged.",
+          "tags": [
+            "Observability"
+          ],
+          "hours": 6,
+          "resources": [
+            {
+              "type": "article",
+              "title": "SLOs people actually use",
+              "url": "https://blog.weteachkubernetes.com/slos-people-actually-use/",
+              "by": "Kyle-Law",
+              "minutes": 9,
+              "added": "2026-10-08"
+            }
+          ]
+        },
+        {
+          "id": "extend-k8s",
+          "title": "Extending Kubernetes yourself",
+          "summary": "A CRD and controller with controller-runtime, which is also the shortest route to upstream contribution.",
+          "tags": [
+            "Scheduling",
+            "GitOps"
+          ],
+          "hours": 12,
+          "resources": [
+            {
+              "type": "article",
+              "title": "Extending Kubernetes yourself",
+              "url": "https://blog.weteachkubernetes.com/extending-kubernetes-yourself/",
+              "by": "Kyle-Law",
+              "minutes": 12,
+              "added": "2026-10-08"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}</script>
+<script>
+/* ---------- deterministic portrait generator ----------
+   Reads a seed string, draws an SVG "portrait" that is recognisably a person at
+   thumbnail size. No network requests, no real faces. */
+function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+const SKIN=['#F2D3B8','#E3B592','#C98E64','#A96B42','#7E4A2B','#5C3420','#F7DFC9','#D9A273'];
+const CLOTH=['#3B4A66','#326CE5','#0F8F86','#B3456B','#C2761A','#2F3A4D','#2457C5','#7A8699','#1F6F63'];
+const BACK=[['#CFD8E8','#9FB0CA'],['#DFE9FB','#B3C7EA'],['#D6EBE7','#A8CFC8'],['#F3DCE3','#D6AFBE'],
+            ['#F6E6CF','#DCC296'],['#DCE3EC','#B3BECD'],['#E8E2D9','#C6BCAC']];
+function portrait(seed,px){
+  const h=hash(seed), p=n=>((h>>>n)&255)/255;
+  const skin=SKIN[h%SKIN.length], cloth=CLOTH[(h>>>3)%CLOTH.length], bg=BACK[(h>>>7)%BACK.length];
+  const hair=CLOTH[(h>>>11)%CLOTH.length], style=(h>>>13)%5;
+  const hx=46+Math.round(p(17)*8), hy=40+Math.round(p(19)*5);   /* head centre */
+  const r=19+Math.round(p(23)*3);
+  let top='';
+  if(style===0) top=`<path d="M${hx-r-2} ${hy-2} a${r+2} ${r+2} 0 0 1 ${2*r+4} 0 l0 -6 a${r+2} ${r+4} 0 0 0 ${-2*r-4} 0 z" fill="${hair}"/>
+                     <ellipse cx="${hx}" cy="${hy-r+4}" rx="${r+1}" ry="${r-5}" fill="${hair}"/>`;
+  else if(style===1) top=`<path d="M${hx-r-4} ${hy+8} q0 -${r+14} ${r+4} -${r+12} q${r+4} -2 ${r+4} ${r+12} q-4 -8 -${r+4} -9 q-${r} 1 -${r+4} 9 z" fill="${hair}"/>`;
+  else if(style===2) top=`<ellipse cx="${hx}" cy="${hy-r+2}" rx="${r-2}" ry="${r-9}" fill="${hair}"/>
+                          <circle cx="${hx+r-2}" cy="${hy-r-2}" r="7" fill="${hair}"/>`;
+  else if(style===3) top=`<path d="M${hx-r-3} ${hy+14} q-2 -${r+18} ${r+3} -${r+16} q${r+5} -2 ${r+3} ${r+16} q-6 -6 -${r+3} -6 q-${r-2} 0 -${r+3} 6 z" fill="${hair}"/>`;
+  else top=`<ellipse cx="${hx}" cy="${hy-r+6}" rx="${r-3}" ry="${r-12}" fill="${hair}" opacity=".85"/>`;
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${bg[0]}"/><stop offset="1" stop-color="${bg[1]}"/></linearGradient></defs>
+    <rect width="100" height="100" fill="url(#g)"/>
+    <ellipse cx="${hx}" cy="106" rx="${34+Math.round(p(29)*8)}" ry="34" fill="${cloth}"/>
+    <rect x="${hx-5}" y="${hy+r-6}" width="10" height="14" rx="4" fill="${skin}"/>
+    <ellipse cx="${hx}" cy="${hy}" rx="${r}" ry="${r+2}" fill="${skin}"/>
+    ${top}
+    <ellipse cx="${hx}" cy="${hy}" rx="${r}" ry="${r+2}" fill="#000" opacity=".06"/>
+    <rect width="100" height="100" fill="#0E1E38" opacity="${(0.04+p(31)*0.1).toFixed(3)}"/>
+  </svg>`;
+  /* single-quoted url() so the value is safe inside a style="..." attribute */
+  return "url('data:image/svg+xml;utf8,"+encodeURIComponent(svg.replace(/\s+/g,' '))+"')";
+}
+
+/* ---------- data ---------- */
+const C=JSON.parse(document.getElementById('d-contrib').textContent);
+const R=JSON.parse(document.getElementById('d-roadmap').textContent);
+const BY={}; C.people.forEach(p=>BY[p.handle]=p);
+const TAG={}; R.tags.forEach(t=>TAG[t.id]=t);
+const CPS=R.stages.flatMap(s=>s.checkpoints);
+const ALLRES=CPS.flatMap(c=>c.resources);
+
+/* ---------- portrait wall ---------- */
+const wall=document.getElementById('wall');
+const seeds=C.people.map(p=>p.handle).concat(Array.from({length:180},(_,i)=>'wtk-learner-'+i));
+function tileCount(){const w=innerWidth,h=Math.min(innerHeight*.78,620);
+  return Math.ceil(w/87)*Math.ceil(h/87)+Math.ceil(w/87)}
+let tiles=[];
+function buildWall(){
+  wall.innerHTML=''; tiles=[];
+  const n=tileCount();
+  for(let i=0;i<n;i++){
+    const d=document.createElement('div'); d.className='tile';
+    d.style.backgroundImage=portrait(seeds[(i*7)%seeds.length],84);
+    d.style.opacity=(0.3+Math.random()*0.38).toFixed(2);
+    wall.appendChild(d); tiles.push(d);
+  }
+}
+buildWall();
+addEventListener('resize',()=>{clearTimeout(window._rz);window._rz=setTimeout(buildWall,250)});
+const calm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+if(!calm) setInterval(()=>{
+  for(let k=0;k<3;k++){
+    const t=tiles[Math.floor(Math.random()*tiles.length)]; if(!t) continue;
+    const o=t.style.opacity; t.classList.add('swap');
+    setTimeout(()=>{t.style.backgroundImage=portrait('wtk-'+Math.random().toString(36).slice(2),84);
+      t.style.opacity=o; t.classList.remove('swap')},480);
+  }
+},620);
+
+/* ---------- hero stats + ticker ---------- */
+document.getElementById('s-people').textContent=C.people.length;
+document.getElementById('s-res').textContent=ALLRES.length;
+document.getElementById('s-cp').textContent=CPS.length;
+document.getElementById('s-hrs').textContent=CPS.reduce((a,c)=>a+c.hours,0);
+const recent=[...ALLRES].sort((a,b)=>b.added.localeCompare(a.added)).slice(0,8);
+let ti=0; const tick=document.getElementById('ticker');
+function spin(){
+  if(!recent.length){
+    tick.innerHTML='<b>'+CPS.length+' checkpoints, no tutorials yet.</b> &nbsp;·&nbsp; '
+      +'every one of them is open';
+    return;
+  }
+  const r=recent[ti%recent.length];
+  tick.innerHTML='merged '+r.added+' &nbsp;·&nbsp; <b>'+r.title+'</b> &nbsp;·&nbsp; by '
+    +(BY[r.by]?BY[r.by].name:r.by);
+  ti++}
+spin(); if(!calm&&recent.length>1) setInterval(spin,3400);
+
+/* ---------- filter state ---------- */
+const sel=new Set(); let mode='any';
+const chips=document.getElementById('chips');
+function drawChips(){
+  chips.innerHTML='';
+  const add=(html)=>chips.insertAdjacentHTML('beforeend',html);
+  add('<span class="flabel">Certifications</span>');
+  R.tags.filter(t=>t.kind==='cert').forEach(t=>add(
+    `<button class="chip cert${sel.has(t.id)?' on':''}" data-t="${t.id}" title="${t.note}">${t.label}</button>`));
+  add('<span class="flabel" style="margin-left:10px">Topics</span>');
+  R.tags.filter(t=>t.kind==='topic').forEach(t=>add(
+    `<button class="chip topic${sel.has(t.id)?' on':''}" data-t="${t.id}" title="${t.note}">${t.label}</button>`));
+  if(sel.size) add('<button class="chip clear" data-clear="1">clear</button>');
+  add(`<span class="mode">match
+      <button data-m="any" class="${mode==='any'?'on':''}">any</button>
+      <button data-m="all" class="${mode==='all'?'on':''}">all</button></span>`);
+}
+chips.addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  if(b.dataset.clear) sel.clear();
+  else if(b.dataset.m) mode=b.dataset.m;
+  else if(b.dataset.t){ sel.has(b.dataset.t)?sel.delete(b.dataset.t):sel.add(b.dataset.t) }
+  drawChips(); render();
+});
+
+function matches(cp){
+  if(!sel.size) return true;
+  const ts=new Set(cp.tags);
+  return mode==='all' ? [...sel].every(t=>ts.has(t)) : [...sel].some(t=>ts.has(t));
+}
+
+/* ---------- checkpoint lookup, used by the second column ---------- */
+const CP={}; CPS.forEach(cp=>CP[cp.id]=cp);
+const STAGE={}; R.stages.forEach(s=>s.checkpoints.forEach(cp=>STAGE[cp.id]=s));
+let cur=null;
+
+/* ---------- render the list: title and tags, nothing else ---------- */
+const road=document.getElementById('roadmap');
+function render(){
+  let step=0, hrs=0, res=0; const folks=new Set(); let shown=0;
+  const out=R.stages.map(s=>{
+    const vis=s.checkpoints.filter(matches);
+    if(!vis.length) return '';
+    shown++;
+    const body=vis.map(cp=>{
+      step++; hrs+=cp.hours; res+=cp.resources.length;
+      cp.resources.forEach(r=>folks.add(r.by));
+      const tags=cp.tags.map(t=>{const d=TAG[t]||{kind:'topic',label:t};
+        return `<span class="t ${d.kind}${sel.has(t)?' hit':''}">${d.label}</span>`}).join('');
+      return `<div class="cp${cur===cp.id?' cur':''}${done.has(cp.id)?' done':''}" data-id="${cp.id}">
+        <div class="step">${step}</div>
+        <h4>${cp.title}</h4>
+        <div class="cpmeta">${tags}</div>
+        <button class="tick" data-tick="${cp.id}" title="${done.has(cp.id)?'Mark as not done':'Mark as done'}">&check;</button>
+        <span class="go">&rsaquo;</span>
+      </div>`}).join('');
+    const dn=vis.filter(cp=>done.has(cp.id)).length;
+    return `<div class="stage"><div class="stagehead">
+        <h3>${s.title}</h3><span class="sb">${s.blurb}</span>
+        <span class="count">${dn?dn+' done · ':''}${vis.length}/${s.checkpoints.length} checkpoints</span>
+      </div>${body}</div>`;
+  }).join('');
+  road.innerHTML = shown ? out :
+    `<div class="empty"><h3>No checkpoint carries all of those tags.</h3>
+     <p>Switch <b>match all</b> to <b>match any</b>, or drop a tag.</p></div>`;
+  const sm=document.getElementById('summary');
+  if(!sel.size){
+    sm.innerHTML=`Showing the whole roadmap — <b>${CPS.length}</b> checkpoints,
+      <b>${hrs}</b> hours, <b>${res}</b> tutorials from <b>${folks.size}</b> people.
+      Pick tags above to cut it down to a path.`;
+  } else if(!shown){
+    sm.innerHTML=`<span class="none">Nothing matches <b>${[...sel].join(' + ')}</b> in <b>${mode}</b> mode.</span>`;
+  } else {
+    sm.innerHTML=`Your path: <b>${step}</b> checkpoints · <b>${hrs}</b> hours ·
+      <b>${res}</b> tutorials · <b>${folks.size}</b> contributors ·
+      filtered on <b>${[...sel].join(mode==='all'?' + ':' / ')}</b>
+      <span style="color:var(--faint)">(${Math.round(100*step/CPS.length)}% of the full roadmap)</span>`;
+  }
+}
+
+/* ---------- second column: everything about one checkpoint ---------- */
+road.onclick=e=>{
+  const t=e.target.closest('[data-tick]');
+  if(t){ const id=t.dataset.tick;
+    done.has(id)?done.delete(id):done.add(id);
+    saveProgress(); render(); if(cur===id) detail(id);
+    e.stopPropagation(); return }
+  const row=e.target.closest('.cp'); if(row) select(row.dataset.id);
+};
+document.getElementById('pc').onclick=()=>document.getElementById('panel').classList.remove('up');
+
+function select(id){
+  cur=id; render(); detail(id);
+  history.replaceState(null,'','#'+id);
+  document.getElementById('panel').classList.add('up');
+}
+
+function detail(id){
+  const cp=CP[id], st=STAGE[id], pb=document.getElementById('pbody');
+  const tags=cp.tags.map(t=>{const d=TAG[t]||{kind:'topic',label:t};
+    return `<span class="t ${d.kind}">${d.label}</span>`}).join(' ');
+  const rs=cp.resources.map(r=>{const p=BY[r.by]||{name:r.by,title:''};
+    return `<a class="r" href="${r.url}">
+      <span class="av" style="background-image:${portrait(r.by,30)}"></span>
+      <span class="rt"><span class="ti">${r.title}</span>
+        <span class="by">${p.name}${p.title?' · '+p.title:''} · ${r.minutes}m</span></span>
+      <span class="kind ${r.type}">${r.type}</span></a>`}).join('');
+  pb.innerHTML=`
+    <div class="crumb">${st.title}</div>
+    <h2>${cp.title}</h2>
+    <div class="pmeta">
+      ${tags}
+      <span class="pm">~${cp.hours}h</span>
+      <span class="pm id" data-copy="${cp.id}" title="click to copy the checkpoint id">${cp.id}</span>
+      <button class="pm" id="pdone" style="cursor:pointer; border:0; ${done.has(cp.id)
+        ?'background:var(--ok-l); color:var(--ok)':''}">${done.has(cp.id)?'✓ done':'mark done'}</button>
+    </div>
+    <p class="psum">${cp.summary}</p>
+    <div class="blk">
+      <div class="h">Tutorials from the community ${cp.resources.length?'('+cp.resources.length+')':''}<i></i></div>
+      ${cp.resources.length?`<div class="res">${rs}</div>
+         <p class="fnote" style="margin-top:8px">Link rotted? <button id="rep" style="background:none;
+           border:0; color:var(--brand); cursor:pointer; text-decoration:underline; padding:0;
+           font-size:11.5px">Report it</button> — that one needs an account too, so reports have
+           a name against them.</p>`
+        :`<div class="nothing">Nobody has written this one up yet. That makes it the single most
+           useful pull request you could open today.</div>`}
+    </div>
+    <div class="blk">
+      <div class="h">Add a tutorial to this checkpoint<i></i></div>
+      <form class="addf" id="addf" novalidate>
+        <div class="fr2">
+          <label>Kind
+            <select name="type">
+              <option value="article">Article</option>
+              <option value="video">Video</option>
+              <option value="lab">Lab</option>
+              <option value="repo">Repo</option>
+            </select></label>
+          <label>Minutes<input name="minutes" type="number" min="1" max="600" value="15"></label>
+        </div>
+        <label>Title<input name="title" maxlength="90"
+          placeholder="Watching policy drops in Hubble"></label>
+        <label>Link<input name="url" type="url" placeholder="https://..."></label>
+        <div class="auth" id="auth"></div>
+        <div class="newc" id="newc" hidden>
+          <label>How your name should appear
+            <input name="name" maxlength="60" placeholder="Your Name"></label>
+          <label>LinkedIn <span class="opt">— optional</span>
+            <input name="linkedin" type="url" placeholder="https://www.linkedin.com/in/..."></label>
+        </div>
+        <label class="chk"><input type="checkbox" name="ack">
+          This links to free public material and contains no exam content.</label>
+        <p class="err" id="ferr" hidden></p>
+        <button class="pbtn" type="submit" id="fsubmit" disabled>Open a pull request</button>
+        <p class="fnote">The pull request is opened by the site and credits you as co-author, so it
+        lands on your GitHub profile. Nothing appears on the site until a maintainer merges it.</p>
+      </form>
+      <div id="fdone" hidden></div>
+    </div>`;
+  const ci=pb.querySelector('.pm.id');
+  if(ci) ci.onclick=()=>copy(ci.dataset.copy,ci);
+  const pd=document.getElementById('pdone');
+  if(pd) pd.onclick=()=>{ done.has(cp.id)?done.delete(cp.id):done.add(cp.id);
+    saveProgress(); render(); detail(cp.id) };
+  const rp=document.getElementById('rep');
+  if(rp) rp.onclick=()=>{
+    if(!AUTH_ENABLED){ rp.outerHTML=`<a class="synced" href="${REPO}/issues/new?title=`
+      +encodeURIComponent('dead link on '+cp.id)+`">open an issue instead &rarr;</a>`; return }
+    if(!session){ startSignIn(); return }
+    rp.textContent='reporting…';
+    fetch('/api/report',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({checkpoint:cp.id})})
+      .then(r=>{ rp.outerHTML=`<span class="synced">${r.ok?'reported — thank you'
+        :'could not report, sorry'}</span>` })
+      .catch(()=>{ rp.textContent='offline — try later' });
+  };
+  wireForm(cp);
+}
+
+/* ================= session, site-wide =================
+   Reading this site needs no account: the roadmap, every node, every tutorial and every
+   contributor page are public and indexable. Signing in is optional and buys two things,
+   both of them writes: submitting a tutorial, and progress that follows you between devices.
+
+   The authorize URL carries an EMPTY scope. GitHub's consent screen will say "read public
+   profile data" and nothing else - no repository access, no write access to anything.
+   We use it to know which handle a contribution is credited to, which is also what makes
+   impersonation impossible: the Worker reads the handle from the session, never from the form.
+
+   Everything below is simulated. No request leaves this page. */
+/* Writes are off until the GitHub OAuth app and the KV namespace exist. Flip this to true
+   after deploying functions/ and setting the secrets - see DEPLOY.md. Everything that reads
+   works either way, which is the whole point of the model. */
+const AUTH_ENABLED=false;
+const REPO='https://github.com/Kyle-Law/weteachkubernetes';
+const PROGRESS_ENDPOINT='/api/progress';
+const ENDPOINT='/api/contribute';
+let session=null;
+const noreply=s=>s.id+'+'+s.handle+'@users.noreply.github.com';
+
+/* ---- progress: localStorage while anonymous, the account once signed in ---- */
+const PKEY='wtk.done.v3';
+let done=new Set(), lastSync='';
+function loadLocal(){
+  try{ return new Set(JSON.parse(localStorage.getItem(PKEY)||'[]')) }catch(e){ return new Set() }
+}
+function saveProgress(){
+  if(session){
+    /* The account is the record now. Deliberately NOT mirrored into localStorage, or stale
+       ticks would resurrect on the next anonymous visit. */
+    lastSync='saving…'; drawSession();
+    fetch(PROGRESS_ENDPOINT,{method:'PUT',headers:{'content-type':'application/json'},
+      body:JSON.stringify({done:[...done]})})
+      .then(r=>{ lastSync=r.ok?'synced':'not saved'; drawSession() })
+      .catch(()=>{ lastSync='offline'; drawSession() });
+    return;
+  } else {
+    lastSync='this device only';
+    try{ localStorage.setItem(PKEY,JSON.stringify([...done])) }catch(e){}
+  }
+  drawSession();
+}
+
+done=loadLocal();
+
+function drawSession(){
+  const el=document.getElementById('sess'); if(!el) return;
+  if(!AUTH_ENABLED){
+    el.innerHTML=`<span class="prog local">${done.size} done · this device</span>
+      <a class="signin" href="${REPO}" style="text-decoration:none">Contribute on GitHub</a>`;
+    return;
+  }
+  if(!session){
+    el.innerHTML=`<span class="prog local">${done.size} done · this device</span>
+      <a class="signin" href="/api/auth/start" style="text-decoration:none">Sign in with GitHub</a>`;
+  } else {
+    el.innerHTML=`<span class="prog">${done.size} done${lastSync?' · '+lastSync:''}</span>
+      <span class="av" style="background-image:${portrait(session.handle,30)}"></span>
+      <span><span class="nm">${session.name}</span>
+        <span class="hd">@${session.handle}</span></span>
+      <button class="out" id="hsignout">sign out</button>`;
+    document.getElementById('hsignout').onclick=()=>{
+      fetch('/api/auth/signout',{method:'POST'}).catch(()=>{});
+      session=null; lastSync='this device only';
+      done=loadLocal();          /* the account keeps its own copy; fall back to this device */
+      drawSession(); render(); if(cur) detail(cur) };
+  }
+}
+
+function startSignIn(){ location.href='/api/auth/start' }
+
+/* Who am I, according to the session cookie? Anonymous is the normal answer. */
+async function loadSession(){
+  if(!AUTH_ENABLED) return;
+  try{
+    const r=await fetch('/api/me',{headers:{accept:'application/json'}});
+    if(!r.ok) return;
+    const me=await r.json();
+    if(!me||!me.handle) return;
+    session=me;
+    const server=new Set(me.done||[]);
+    const local=loadLocal();
+    if(local.size && [...local].some(x=>!server.has(x))){ done=server; offerMerge(local) }
+    else { done=server; lastSync='synced' }
+    drawSession(); render(); if(cur) detail(cur);
+  }catch(e){}
+}
+
+function offerMerge(local){
+  const bar=document.getElementById('mergebar'); if(!bar) return;
+  bar.hidden=false;
+  bar.querySelector('.wrap').innerHTML=
+    `<span><b>${local.size}</b> checkpoint${local.size===1?'':'s'} were marked on this device
+     before you signed in. Merge them into @${session.handle}?</span>
+     <button class="yes" id="mgyes">Merge</button>
+     <button class="no" id="mgno">Discard them</button>`;
+  document.getElementById('mgyes').onclick=()=>{
+    local.forEach(x=>done.add(x)); bar.hidden=true; saveProgress(); render() };
+  document.getElementById('mgno').onclick=()=>{
+    try{ localStorage.removeItem(PKEY) }catch(e){} bar.hidden=true; drawSession(); render() };
+}
+
+/* ================= the contribute form =================
+   The only piece that cannot live in the browser: opening a pull request needs a credential
+   with write access to the repo, and that credential must never be shipped to a visitor.
+   The Worker validates, appends to data/roadmap.json on a new branch, and opens the PR. */
+function drawAuth(cp){
+  const a=document.getElementById('auth'), newc=document.getElementById('newc'),
+        btn=document.getElementById('fsubmit');
+  if(!a) return;
+  if(!AUTH_ENABLED){
+    a.className='auth';
+    a.innerHTML=`<p class="ghnote" style="margin:0"><b>One-click submission is not wired up yet.</b>
+      Until it is, add your tutorial by opening a pull request against
+      <code>data/roadmap.json</code> — append the object below to the
+      <code>${cp.id}</code> checkpoint's <code>resources</code> array.</p>
+      <pre style="margin-top:10px">{
+  <span class="k">"type"</span>:    <span class="s">"video"</span>,
+  <span class="k">"title"</span>:   <span class="s">"Your title"</span>,
+  <span class="k">"url"</span>:     <span class="s">"https://..."</span>,
+  <span class="k">"by"</span>:      <span class="s">"your-github-handle"</span>,
+  <span class="k">"minutes"</span>: 15,
+  <span class="k">"added"</span>:   <span class="s">"${new Date().toISOString().slice(0,10)}"</span>
+}</pre>
+      <p class="pbtns"><a class="pbtn" href="${REPO}/edit/main/public/data/roadmap.json">Edit it on
+      GitHub</a></p>`;
+    newc.hidden=true;
+    const form=document.getElementById('addf'); if(form) form.hidden=true;
+    return;
+  }
+  if(!session){
+    a.className='auth';
+    a.innerHTML=`<a class="ghbtn" href="/api/auth/start" style="display:block; text-align:center;
+      text-decoration:none">Sign in with GitHub to submit</a>
+      <p class="ghnote"><b>Only this part needs an account.</b> The consent screen asks for
+      <i>read public profile data</i> and nothing else — no repository access, no write access.
+      It is how your tutorial gets credited to you and nobody else.</p>`;
+    newc.hidden=true; if(btn) btn.disabled=true;
+  } else {
+    const known=!!BY[session.handle];
+    a.className='auth in';
+    a.innerHTML=`<div class="me">
+        <span class="av" style="background-image:${portrait(session.handle,34)}"></span>
+        <span><span class="nm">Posting as ${session.name}</span>
+          <span class="hd">@${session.handle}${known?' · already a contributor':' · first tutorial'}</span></span>
+      </div>
+      <p class="ghnote">Credited as <code>${noreply(session)}</code>, so the commit counts on your
+      profile. Your email address is never asked for or stored.</p>`;
+    newc.hidden=known;
+    if(!known){ const nm=document.getElementById('addf').elements['name'];
+      if(nm&&!nm.value) nm.value=session.name }
+    if(btn) btn.disabled=false;
+  }
+}
+
+function wireForm(cp){
+  const form=document.getElementById('addf'); if(!form) return;
+  const err=document.getElementById('ferr'), btn=document.getElementById('fsubmit');
+  const f=n=>form.elements[n];
+  drawAuth(cp);
+
+  form.onsubmit=e=>{
+    e.preventDefault();
+    [...form.querySelectorAll('input')].forEach(i=>i.classList.remove('bad'));
+    const bad=(el,msg)=>{el.classList.add('bad'); el.focus(); err.hidden=false; err.textContent=msg; return null};
+    if(!session){ err.hidden=false; err.textContent='Sign in with GitHub first.'; return }
+    const title=f('title').value.trim(), url=f('url').value.trim(), mins=parseInt(f('minutes').value,10);
+    const known=!!BY[session.handle];
+    if(title.length<6) return bad(f('title'),'Give it a title people can recognise.');
+    if(!/^https:\/\/[^\s]+\.[^\s]+/.test(url)) return bad(f('url'),'The link must be a full https:// URL.');
+    if(!(mins>0&&mins<=600)) return bad(f('minutes'),'Minutes should be between 1 and 600.');
+    if(!known&&f('name').value.trim().length<2) return bad(f('name'),'Tell us how to credit you.');
+    if(!f('ack').checked){ err.hidden=false;
+      err.textContent='Please confirm there is no exam content in it.'; return }
+    err.hidden=true;
+
+    /* note what is NOT in here: the handle. The Worker reads that from the session cookie. */
+    const payload={ checkpoint:cp.id,
+      resource:{type:f('type').value, title, url, minutes:mins} };
+    if(!known) payload.contributor={name:f('name').value.trim(),
+      linkedin:f('linkedin').value.trim()||null, photo:null};
+
+    btn.disabled=true; btn.textContent='Opening pull request…';
+    fetch(ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify(payload)})
+      .then(async r=>{
+        const body=await r.json().catch(()=>({}));
+        if(!r.ok) throw new Error(body.error||('HTTP '+r.status));
+        form.hidden=true;
+        const d=document.getElementById('fdone');
+        d.hidden=false;
+        d.innerHTML=`<div class="sent">
+          <h4>Pull request #${body.number} opened</h4>
+          <p><b>tutorial: ${cp.id}</b> — opened as <b>@${session.handle}</b>, co-authored so it counts
+          on your profile. A maintainer usually gets to it within a day or two.</p>
+          <a class="pbtn" href="${body.url}">View the pull request</a></div>`;
+      })
+      .catch(e=>{
+        btn.disabled=false; btn.textContent='Open a pull request';
+        err.hidden=false; err.textContent=e.message+' — nothing was submitted. Try again, or open a '
+          +'pull request by hand.';
+      });
+  };
+}
+
+function copy(text,el){
+  const old=el.textContent, ok=()=>{el.textContent='copied'; setTimeout(()=>el.textContent=old,1200)};
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok,ok);
+  else { const t=document.createElement('textarea'); t.value=text; document.body.appendChild(t); t.select();
+         try{document.execCommand('copy')}catch(e){} t.remove(); ok() }
+}
+
+function nothingSelected(){
+  document.getElementById('pbody').innerHTML=`<div class="nosel">
+    <div class="big">&rsaquo;</div>
+    <b>Pick a checkpoint.</b>
+    <p style="margin:8px 0 0">This column fills with what it covers, the articles and videos people
+    have contributed for it, and how to add your own.</p>
+    <p style="margin:10px 0 0; font-size:13px">${CPS.length} checkpoints ·
+    ${ALLRES.length} tutorials · ${C.people.length} contributors.</p></div>`;
+}
+
+/* ---------- people wall ---------- */
+const count={}; ALLRES.forEach(r=>count[r.by]=(count[r.by]||0)+1);
+document.getElementById('people').innerHTML=C.people.map(p=>{
+  const n=count[p.handle]||0;
+  return `<div class="p">
+    <div class="top">
+      <div class="av" style="background-image:${portrait(p.handle,46)}"></div>
+      <div><div class="nm">${p.name}</div><div class="ti">${p.title}</div></div>
+    </div>
+    <div class="loc">${p.location} · ${p.tz}${p.certs.length?' · '+p.certs.join(' '):''}</div>
+    <div class="cnt">${n} tutorial${n===1?'':'s'} on this roadmap</div>
+    <div class="lk"><a href="${p.github}">github</a>${p.linkedin?`<a href="${p.linkedin}">linkedin</a>`:'<span style="color:var(--faint);font-family:var(--mono)">no linkedin</span>'}</div>
+  </div>`}).join('');
+
+drawSession();
+drawChips();
+loadSession();
+const h0=(location.hash||'').replace('#','');
+if(h0&&CP[h0]) select(h0); else { render(); nothingSelected() }
+addEventListener('hashchange',()=>{const x=(location.hash||'').replace('#','');
+  if(x&&CP[x]&&x!==cur) select(x)});
+
+/* The page ships with the data inlined so it renders in one request with no flash of
+   emptiness. data/*.json is still served for anyone who wants to read or fork it. */
+</script>
+</body>
+</html>

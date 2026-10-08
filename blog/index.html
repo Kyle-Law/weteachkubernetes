@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Articles — We Teach Kubernetes</title>
+<meta name="description" content="One article for every checkpoint on the Kubernetes roadmap.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/">
+<link rel="stylesheet" href="style.css">
+<meta property="og:title" content="We Teach Kubernetes — articles">
+<meta property="og:description" content="One article for every checkpoint on the Kubernetes roadmap.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/">
+<meta property="og:type" content="website">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+
+<div class="hero"><div class="wrap wide">
+  <h1>One article for every <i>checkpoint</i></h1>
+  <p>The roadmap says what to learn and in what order. These say how the thing actually behaves,
+  including the parts that only show up once you run it.</p>
+  <div class="stats">
+    <div><b>20</b>articles</div>
+    <div><b>200</b>minutes</div>
+    <div><b>7</b>stages</div>
+  </div>
+</div></div>
+
+<div class="wrap wide">
+
+  <section class="stage">
+    <h2>Foundations</h2>
+    <p class="blurb">Enough of the object model that everything later has somewhere to attach.</p>
+
+    <a class="post" href="/containers-before-kubernetes/">
+      <h3>Containers before Kubernetes</h3>
+      <p>Namespaces, cgroups and image layers by hand, so that pod behaviour stops looking like magic and starts looking like Linux.</p>
+      <div class="row"><span class="m tag">KCNA</span><span class="m">8 min</span></div>
+    </a>
+
+    <a class="post" href="/the-api-object-model/">
+      <h3>The API object model</h3>
+      <p>Why everything is a resource, what the control loop actually does, and how to read any CRD you meet later without waiting for someone to document it.</p>
+      <div class="row"><span class="m tag">KCNA</span><span class="m tag">CKAD</span><span class="m">9 min</span></div>
+    </a>
+  </section>
+
+  <section class="stage">
+    <h2>Workloads and configuration</h2>
+    <p class="blurb">Getting your own software to run, survive a restart and be configurable without a rebuild.</p>
+
+    <a class="post" href="/deployments-probes-and-rollouts/">
+      <h3>Deployments, probes and rollouts</h3>
+      <p>Rolling updates that do not drop traffic, and the three probes people keep confusing.</p>
+      <div class="row"><span class="m tag">CKAD</span><span class="m tag">CKA</span><span class="m">10 min</span></div>
+    </a>
+
+    <a class="post" href="/config-secrets-and-the-edge-cases/">
+      <h3>Config, secrets and the twelve-factor edge cases</h3>
+      <p>ConfigMap reload behaviour, projected volumes, and why your Secret is base64 and not encrypted.</p>
+      <div class="row"><span class="m tag">CKAD</span><span class="m topic">Security</span><span class="m">8 min</span></div>
+    </a>
+
+    <a class="post" href="/declarative-delivery/">
+      <h3>Declarative delivery</h3>
+      <p>Kustomize overlays and a pull-based reconciler, so environments stop drifting silently and a cluster can be rebuilt from Git alone.</p>
+      <div class="row"><span class="m topic">GitOps</span><span class="m tag">CKAD</span><span class="m">9 min</span></div>
+    </a>
+  </section>
+
+  <section class="stage">
+    <h2>Running a cluster</h2>
+    <p class="blurb">The part where it is your pager. Control plane internals, upgrades, and recovering from your own mistakes.</p>
+
+    <a class="post" href="/control-plane-and-etcd/">
+      <h3>Control plane components and etcd</h3>
+      <p>What each component owns, plus a real backup and restore of etcd on a cluster you can afford to destroy.</p>
+      <div class="row"><span class="m tag">CKA</span><span class="m">11 min</span></div>
+    </a>
+
+    <a class="post" href="/rbac-and-multi-tenancy/">
+      <h3>RBAC and multi-tenancy</h3>
+      <p>Roles that are actually least-privilege, and the three places tenancy leaks anyway.</p>
+      <div class="row"><span class="m tag">CKA</span><span class="m topic">Security</span><span class="m tag">KCSA</span><span class="m">10 min</span></div>
+    </a>
+
+    <a class="post" href="/troubleshooting-under-time-pressure/">
+      <h3>Troubleshooting under time pressure</h3>
+      <p>A fixed order of operations for a broken cluster, so you stop guessing when it matters most.</p>
+      <div class="row"><span class="m tag">CKA</span><span class="m topic">Observability</span><span class="m">9 min</span></div>
+    </a>
+  </section>
+
+  <section class="stage">
+    <h2>Networking</h2>
+    <p class="blurb">Where most senior interviews go, and where the CKNE lives. Packets, policy and the mesh question.</p>
+
+    <a class="post" href="/pod-networking-from-first-principles/">
+      <h3>Pod networking from first principles</h3>
+      <p>Follow a packet from one pod to another across nodes, then do it again with the CNI removed so you can see what it was doing for you.</p>
+      <div class="row"><span class="m tag">CKNE</span><span class="m topic">Networking</span><span class="m tag">CKA</span><span class="m">12 min</span></div>
+    </a>
+
+    <a class="post" href="/network-policy-you-can-debug/">
+      <h3>Network policy that someone can debug</h3>
+      <p>Default-deny without taking production down, and proving the policy does what you claimed it does.</p>
+      <div class="row"><span class="m tag">CKNE</span><span class="m topic">Networking</span><span class="m tag">CKS</span><span class="m topic">Security</span><span class="m">10 min</span></div>
+    </a>
+
+    <a class="post" href="/gateway-api-and-the-mesh-decision/">
+      <h3>Gateway API and the mesh decision</h3>
+      <p>Ingress to Gateway API route by route, and an honest list of what a service mesh costs you.</p>
+      <div class="row"><span class="m tag">CKNE</span><span class="m topic">Networking</span><span class="m">11 min</span></div>
+    </a>
+  </section>
+
+  <section class="stage">
+    <h2>Security</h2>
+    <p class="blurb">Supply chain, admission and runtime. The CKS track, plus the parts no exam covers.</p>
+
+    <a class="post" href="/admission-control-and-policy-as-code/">
+      <h3>Admission control and policy as code</h3>
+      <p>Pod Security Admission first, then a policy engine for the rules PSA cannot express and a webhook only when nothing else will do.</p>
+      <div class="row"><span class="m tag">CKS</span><span class="m topic">Security</span><span class="m tag">KCSA</span><span class="m">10 min</span></div>
+    </a>
+
+    <a class="post" href="/supply-chain-and-image-provenance/">
+      <h3>Supply chain and image provenance</h3>
+      <p>Signing, verifying, and actually failing closed when verification fails &amp;mdash; which is the only part that matters.</p>
+      <div class="row"><span class="m tag">CKS</span><span class="m topic">Security</span><span class="m">9 min</span></div>
+    </a>
+
+    <a class="post" href="/runtime-detection-and-response/">
+      <h3>Runtime detection and response</h3>
+      <p>Seeing a container do something it should not, and having a plan for the next ten minutes rather than inventing one live.</p>
+      <div class="row"><span class="m tag">CKS</span><span class="m topic">Security</span><span class="m topic">Observability</span><span class="m">9 min</span></div>
+    </a>
+  </section>
+
+  <section class="stage">
+    <h2>AI inference and GPUs</h2>
+    <p class="blurb">No certification covers this yet, which is exactly why it is worth writing down.</p>
+
+    <a class="post" href="/getting-a-gpu-into-a-pod/">
+      <h3>Getting a GPU into a pod</h3>
+      <p>The device plugin model, drivers, and the difference between MIG and time-slicing when cost is the constraint.</p>
+      <div class="row"><span class="m topic">Inference</span><span class="m topic">Scheduling</span><span class="m">11 min</span></div>
+    </a>
+
+    <a class="post" href="/serving-a-model-like-a-production-service/">
+      <h3>Serving a model like a production service</h3>
+      <p>vLLM behind a Gateway, with readiness that reflects model load rather than process start &amp;mdash; which is where most first attempts go wrong.</p>
+      <div class="row"><span class="m topic">Inference</span><span class="m topic">Networking</span><span class="m">12 min</span></div>
+    </a>
+
+    <a class="post" href="/scaling-inference-on-real-traffic/">
+      <h3>Scaling inference on real traffic</h3>
+      <p>Queue-depth autoscaling, cold starts measured in minutes, and the bill as a design constraint rather than an afterthought.</p>
+      <div class="row"><span class="m topic">Inference</span><span class="m topic">Scheduling</span><span class="m topic">Observability</span><span class="m">11 min</span></div>
+    </a>
+  </section>
+
+  <section class="stage">
+    <h2>Platform and scale</h2>
+    <p class="blurb">What changes when other teams depend on you and nobody reads your docs.</p>
+
+    <a class="post" href="/capacity-bin-packing-and-autoscaling/">
+      <h3>Capacity, bin-packing and autoscaling</h3>
+      <p>Requests and limits chosen from data, plus node autoscaling that does not thrash.</p>
+      <div class="row"><span class="m topic">Scheduling</span><span class="m tag">CKA</span><span class="m">10 min</span></div>
+    </a>
+
+    <a class="post" href="/slos-people-actually-use/">
+      <h3>SLOs people actually use</h3>
+      <p>Three signals per service, one dashboard, and alerts that correspond to someone being paged.</p>
+      <div class="row"><span class="m topic">Observability</span><span class="m">9 min</span></div>
+    </a>
+
+    <a class="post" href="/extending-kubernetes-yourself/">
+      <h3>Extending Kubernetes yourself</h3>
+      <p>A CRD and controller with controller-runtime &amp;mdash; which is also the shortest honest route to your first upstream contribution.</p>
+      <div class="row"><span class="m topic">Scheduling</span><span class="m topic">GitOps</span><span class="m">12 min</span></div>
+    </a>
+  </section>
+</div>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>

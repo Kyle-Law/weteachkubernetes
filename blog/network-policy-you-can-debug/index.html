@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Network policy that someone can debug — We Teach Kubernetes</title>
+<meta name="description" content="Default-deny without taking production down, and proving the policy does what you claimed it does.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/network-policy-you-can-debug/">
+<link rel="stylesheet" href="../style.css">
+<meta property="og:title" content="Network policy that someone can debug">
+<meta property="og:description" content="Default-deny without taking production down, and proving the policy does what you claimed it does.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/network-policy-you-can-debug/">
+<meta property="og:type" content="article">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<article><div class="wrap">
+  <div class="kicker">Networking</div>
+  <h1>Network policy that someone can debug</h1>
+  <p class="dek">Default-deny without taking production down, and proving the policy does what you claimed it does.</p>
+  <div class="meta">
+    <span class="m tag">CKNE</span><span class="m topic">Networking</span><span class="m tag">CKS</span><span class="m topic">Security</span>
+    <span class="m">10 min read</span>
+    <span class="byline">by <a href="https://github.com/Kyle-Law">Kyle Law</a> · 2026-10-08</span>
+  </div>
+  <div class="body">
+      <p>An empty cluster is a flat network: every pod can reach every other pod, in every namespace. NetworkPolicy is how you stop that, and the reason most teams never finish rolling it out is that the first attempt breaks something at 9am.</p>
+      <h2>The model, which is unlike a firewall</h2>
+      <ul><li>Policies are <strong>allow-only</strong>. There is no deny rule.</li><li>A pod with <strong>no policy</strong> selecting it allows everything.</li><li>A pod with <strong>any</strong> policy selecting it denies everything not explicitly allowed, <em>for that direction</em>.</li><li>Ingress and egress are independent. A policy with only ingress rules leaves egress wide open.</li></ul>
+      <div class="note">That third rule is the whole trick. You do not write a deny &mdash; you make a pod selected by <em>some</em> policy, which flips it to default-deny, and then add back what it genuinely needs.</div>
+      <h2>Default-deny, and why it bites</h2>
+      <pre><code>apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: team-a
+spec:
+  podSelector: {}            <span class="c"># every pod in the namespace</span>
+  policyTypes: [Ingress, Egress]</code></pre>
+      <div class="gotcha"><b>Apply that and DNS stops working.</b> Egress deny includes UDP 53 to CoreDNS in <code>kube-system</code>, so every pod in the namespace starts failing name resolution &mdash; which surfaces as application timeouts, not as a network error, and sends people looking in entirely the wrong place. Always pair default-deny with a DNS allowance in the same commit.</div>
+      <pre><code>apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: team-a
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }</code></pre>
+      <h2>The selector trap that silently widens a rule</h2>
+      <p>In a single <code>to</code> or <code>from</code> block, listing <code>namespaceSelector</code> and <code>podSelector</code> as two array items is an OR. Putting them under one item, as above, is an AND. The YAML difference is a single dash:</p>
+      <pre><code><span class="c"># AND - pods matching app=api, in namespaces matching team=a</span>
+from:
+  - namespaceSelector: { matchLabels: { team: a } }
+    podSelector: { matchLabels: { app: api } }
+
+<span class="c"># OR - every pod in those namespaces, PLUS every app=api pod anywhere</span>
+from:
+  - namespaceSelector: { matchLabels: { team: a } }
+  - podSelector: { matchLabels: { app: api } }</code></pre>
+      <p>The second form is almost never what anyone means, and it reviews as correct. It is the most common real defect in policy I have seen.</p>
+      <h2>Roll it out without an incident</h2>
+      <ol><li>Start in a <strong>non-production namespace</strong> and get DNS right there first.</li><li>Write the <strong>allow</strong> policies before the deny, and apply them first. They do nothing on their own, because nothing is denied yet.</li><li>Apply default-deny <strong>per namespace</strong>, never cluster-wide in one go.</li><li>Watch for drops rather than waiting for complaints.</li></ol>
+      <h2>Proving it, instead of hoping</h2>
+      <pre><code><span class="c"># the direct test, from a pod that should be refused</span>
+kubectl run probe --rm -it --image=nicolaka/netshoot -n team-b -- \
+  curl -m 3 http://api.team-a.svc.cluster.local
+
+<span class="c"># with Cilium: watch the verdicts live</span>
+cilium hubble observe --verdict DROPPED --namespace team-a
+
+<span class="c"># with Cilium: ask, rather than test</span>
+cilium connectivity test</code></pre>
+      <p>Plain upstream NetworkPolicy has no observability at all &mdash; a dropped packet is just a timeout. That absence is the strongest practical argument for Cilium or Calico over a minimal CNI: not the policy features, but being able to see the drop and name the rule that caused it.</p>
+      <h2>What to actually do with this</h2>
+      <ul><li>Apply default-deny plus DNS to one non-production namespace this week.</li><li>Grep your existing policies for the OR-versus-AND mistake. Check every <code>from</code> block with two dashes.</li><li>Pick a CNI that can show you drops before you need to debug one.</li></ul>
+  </div>
+  <div class="back">
+    <b>This article covers one checkpoint on the roadmap.</b>
+    <a href="https://weteachkubernetes.com/#network-policy">Open <strong>Network policy that someone can debug</strong> on the roadmap &rarr;</a>
+    — it lists what this depends on and everything else written about it.
+  </div>
+  <p class="fix">Something wrong or out of date?
+    <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=blog%3A%20network-policy-you-can-debug">Open an issue</a> — corrections are
+    welcome and get credited.</p>
+</div></article>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>

@@ -1,0 +1,35 @@
+{
+  "_note": "Real contributor records. One object per person, keyed by `handle` = GitHub username.",
+  "_how_to_add_yourself": [
+    "1. Append one object to `people`, keep the array sorted by `handle`.",
+    "2. `handle` must equal your GitHub username - it is the join key used by roadmap.json.",
+    "3. `photo` and `linkedin` are optional. Leave them null and a portrait is generated from your handle.",
+    "4. Open a PR titled `contributor: <handle>`."
+  ],
+  "people": [
+    {
+      "handle": "Kyle-Law",
+      "name": "Kyle Law",
+      "pronouns": "he/him",
+      "title": "Kubestronaut · maintainer of this roadmap",
+      "location": "Malaysia",
+      "tz": "UTC+8",
+      "photo": null,
+      "github": "https://github.com/Kyle-Law",
+      "linkedin": null,
+      "certs": [
+        "CKA",
+        "CKAD",
+        "CKS",
+        "KCNA",
+        "KCSA"
+      ],
+      "teaches": [
+        "Security",
+        "Networking",
+        "Inference"
+      ],
+      "joined": "2026-10-08"
+    }
+  ]
+}

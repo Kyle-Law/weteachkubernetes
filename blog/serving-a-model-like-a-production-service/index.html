@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Serving a model like a production service — We Teach Kubernetes</title>
+<meta name="description" content="vLLM behind a Gateway, with readiness that reflects model load rather than process start &amp;mdash; which is where most first attempts go wrong.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/serving-a-model-like-a-production-service/">
+<link rel="stylesheet" href="../style.css">
+<meta property="og:title" content="Serving a model like a production service">
+<meta property="og:description" content="vLLM behind a Gateway, with readiness that reflects model load rather than process start &amp;mdash; which is where most first attempts go wrong.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/serving-a-model-like-a-production-service/">
+<meta property="og:type" content="article">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<article><div class="wrap">
+  <div class="kicker">AI inference and GPUs</div>
+  <h1>Serving a model like a production service</h1>
+  <p class="dek">vLLM behind a Gateway, with readiness that reflects model load rather than process start &amp;mdash; which is where most first attempts go wrong.</p>
+  <div class="meta">
+    <span class="m topic">Inference</span><span class="m topic">Networking</span>
+    <span class="m">12 min read</span>
+    <span class="byline">by <a href="https://github.com/Kyle-Law">Kyle Law</a> · 2026-10-08</span>
+  </div>
+  <div class="body">
+      <p>A model server is an ordinary HTTP service with three unusual properties: it takes minutes to become useful, it holds a lot of state in GPU memory, and its requests vary in cost by two orders of magnitude. Every default in Kubernetes is tuned for services with none of those properties.</p>
+      <h2>A minimal vLLM deployment, annotated</h2>
+      <pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata: { name: llm }
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: vllm
+          image: vllm/vllm-openai:latest
+          args:
+            - --model=/models/llama-3.1-8b
+            - --gpu-memory-utilization=0.90
+            - --max-model-len=8192
+          ports: [{ containerPort: 8000 }]
+          resources:
+            limits: { nvidia.com/gpu: 1, memory: 32Gi }
+          volumeMounts:
+            - { name: models, mountPath: /models, readOnly: true }
+            - { name: shm, mountPath: /dev/shm }
+      volumes:
+        - name: models
+          persistentVolumeClaim: { claimName: model-weights }
+        - name: shm                      <span class="c"># NOT optional</span>
+          emptyDir: { medium: Memory, sizeLimit: 8Gi }</code></pre>
+      <div class="gotcha"><b>That <code>/dev/shm</code> volume is the single most common missing line.</b> The default shared-memory segment in a container is 64&nbsp;MB. PyTorch uses shared memory for inter-process communication, so anything with tensor parallelism or multiple workers crashes with an opaque "bus error" or a NCCL failure that reads like a GPU problem. It is not &mdash; it is 64&nbsp;MB of /dev/shm.</div>
+      <h2>Model load time breaks every probe default</h2>
+      <p>Loading 16&nbsp;GB of weights from a network volume into GPU memory takes anywhere from 40 seconds to 6 minutes. With default probes, the container is killed and restarted before it finishes, forever, and the logs show a half-finished load each time.</p>
+      <pre><code>startupProbe:
+  httpGet: { path: /health, port: 8000 }
+  failureThreshold: 60
+  periodSeconds: 10          <span class="c"># up to 10 minutes to load</span>
+
+readinessProbe:
+  httpGet: { path: /health, port: 8000 }
+  periodSeconds: 5
+
+livenessProbe:
+  httpGet: { path: /health, port: 8000 }
+  periodSeconds: 30
+  failureThreshold: 3        <span class="c"># 90s of failure before a restart that costs minutes</span></code></pre>
+      <p>Be conservative with liveness specifically. Restarting a model server is not cheap &mdash; you pay the full load time again &mdash; so a liveness probe that trips on a transient stall makes an incident worse rather than better.</p>
+      <h2>Where the weights live</h2>
+      <ul><li><strong>Baked into the image</strong> &mdash; simplest, and gives you a 20&nbsp;GB image to pull on every new node. Fine for one fixed model.</li><li><strong>A ReadOnlyMany volume</strong> &mdash; pulled once, shared by replicas on the same node. Usually the right default.</li><li><strong>Downloaded by an init container</strong> &mdash; flexible, and every pod start depends on an external registry being up.</li><li><strong>An OCI artefact</strong> &mdash; weights as a separate layer, cached by the node like any image. Increasingly the tidiest answer.</li></ul>
+      <p>Whichever you choose, the first pod on a new node pays the cold cost. That number is the floor on your scale-up latency, and it is the number to measure before you design autoscaling.</p>
+      <h2>Routing: why a plain Service is wrong</h2>
+      <p>A ClusterIP distributes connections roughly evenly and knows nothing about what it is balancing. For LLM traffic that is actively harmful: requests differ enormously in cost, and a replica with a warm KV cache for a given prefix is dramatically cheaper to use than a cold one.</p>
+      <pre><code>apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata: { name: llm }
+spec:
+  parentRefs: [{ name: ai-gateway }]
+  rules:
+    - matches: [{ path: { type: PathPrefix, value: /v1 } }]
+      timeouts:
+        request: 300s            <span class="c"># generation is slow; the default will cut it off</span>
+      backendRefs:
+        - { name: llm, port: 8000 }</code></pre>
+      <p>The timeout is the immediate fix &mdash; most ingress defaults are 30 or 60 seconds and will truncate long generations. Beyond that, the Gateway API Inference Extension adds model-aware routing: queue depth, KV-cache awareness, and routing by model name to different backends behind one endpoint. If you are serving more than one model, that is the thing to look at rather than building it yourself.</p>
+      <h2>Streaming changes the whole request path</h2>
+      <p>Token streaming is server-sent events over a long-lived connection. Anything in the path that buffers responses, or closes idle connections, breaks it in a way that looks like a model problem: the client waits, then gets everything at once, or nothing. Check buffering and idle timeouts on every proxy between the client and the pod before debugging the server.</p>
+      <h2>What to actually do with this</h2>
+      <ul><li>Add the <code>/dev/shm</code> volume now, whether or not you have hit the bug.</li><li>Measure your actual cold start from pod creation to first token, and write it down.</li><li>Set a <code>startupProbe</code> with a failure threshold based on that measurement.</li><li>Raise the request timeout on every proxy in front of the model.</li></ul>
+  </div>
+  <div class="back">
+    <b>This article covers one checkpoint on the roadmap.</b>
+    <a href="https://weteachkubernetes.com/#serving-llms">Open <strong>Serving a model like a production service</strong> on the roadmap &rarr;</a>
+    — it lists what this depends on and everything else written about it.
+  </div>
+  <p class="fix">Something wrong or out of date?
+    <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=blog%3A%20serving-a-model-like-a-production-service">Open an issue</a> — corrections are
+    welcome and get credited.</p>
+</div></article>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>

@@ -1,0 +1,4 @@
+# The roadmap is meant to be found. Nothing here is gated.
+User-agent: *
+Allow: /
+Sitemap: https://weteachkubernetes.com/sitemap.xml

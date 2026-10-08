@@ -1,0 +1,14 @@
+{
+  "name": "weteachkubernetes",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev public",
+    "deploy": "wrangler pages deploy public --project-name=weteachkubernetes",
+    "check": "node scripts/validate.mjs",
+    "tail": "wrangler pages deployment tail --project-name=weteachkubernetes"
+  },
+  "devDependencies": {
+    "wrangler": "^4.148.0"
+  }
+}

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gateway API and the mesh decision — We Teach Kubernetes</title>
+<meta name="description" content="Ingress to Gateway API route by route, and an honest list of what a service mesh costs you.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/gateway-api-and-the-mesh-decision/">
+<link rel="stylesheet" href="../style.css">
+<meta property="og:title" content="Gateway API and the mesh decision">
+<meta property="og:description" content="Ingress to Gateway API route by route, and an honest list of what a service mesh costs you.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/gateway-api-and-the-mesh-decision/">
+<meta property="og:type" content="article">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<article><div class="wrap">
+  <div class="kicker">Networking</div>
+  <h1>Gateway API and the mesh decision</h1>
+  <p class="dek">Ingress to Gateway API route by route, and an honest list of what a service mesh costs you.</p>
+  <div class="meta">
+    <span class="m tag">CKNE</span><span class="m topic">Networking</span>
+    <span class="m">11 min read</span>
+    <span class="byline">by <a href="https://github.com/Kyle-Law">Kyle Law</a> · 2026-10-08</span>
+  </div>
+  <div class="body">
+      <p>Ingress did one job and did it with annotations. Gateway API replaces it with real typed resources and, more importantly, a split of responsibility that matches how teams actually work.</p>
+      <h2>Why the split matters more than the schema</h2>
+      <ul><li><strong>GatewayClass</strong> &mdash; the implementation. Installed once, by whoever runs the platform.</li><li><strong>Gateway</strong> &mdash; the listener: ports, protocols, TLS. Owned by the platform team.</li><li><strong>HTTPRoute</strong> &mdash; hostnames, paths, backends, weights. Owned by the application team, in their own namespace.</li></ul>
+      <p>With Ingress, a developer needing a header-based rule had to edit an annotation blob that only the controller understood, usually in a shared object. With Gateway API they write an HTTPRoute in their namespace and attach it to a Gateway they are permitted to use. The RBAC boundary finally lines up with the ownership boundary.</p>
+      <h2>A route, and a canary</h2>
+      <pre><code>apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: api
+  namespace: team-a
+spec:
+  parentRefs:
+    - name: public-gateway
+      namespace: infra
+  hostnames: [&quot;api.example.com&quot;]
+  rules:
+    - matches:
+        - path: { type: PathPrefix, value: /v2 }
+      backendRefs:
+        - { name: api-v2, port: 8080, weight: 90 }
+        - { name: api-v2-canary, port: 8080, weight: 10 }</code></pre>
+      <p>Weighted backends are in the core specification, not an annotation and not a separate product. That single feature removes the most common reason teams installed a mesh.</p>
+      <h2>Migrating without a flag day</h2>
+      <ol><li>Install a Gateway API implementation alongside your existing ingress controller. They coexist happily.</li><li>Create the Gateway with a <strong>different hostname</strong> &mdash; <code>new.api.example.com</code> &mdash; and port it one route at a time.</li><li>Shift traffic at DNS, with a low TTL, once the new path is proven.</li><li>Delete the Ingress objects last, and only after a week of quiet.</li></ol>
+      <div class="note">Keep <code>ReferenceGrant</code> in mind: a route in one namespace pointing at a Service in another is <em>denied by default</em>. The target namespace has to publish a ReferenceGrant permitting it. This is a feature &mdash; it stops a team routing traffic to someone else’s service &mdash; and it is the most common reason a migrated route silently returns 404.</div>
+      <h2>When a service mesh is the wrong answer</h2>
+      <p>A mesh gives you mutual TLS everywhere, uniform retries and timeouts, L7 authorisation, and per-call telemetry you did not have to instrument. Those are real. So is the bill:</p>
+      <ul><li><strong>A sidecar per pod</strong>, or an eBPF agent per node. Either way, memory and CPU across your whole fleet &mdash; often 10&ndash;15% before you have shipped anything.</li><li><strong>Two more hops in every request path</strong>, and two more places a request can be dropped.</li><li><strong>A second control plane</strong> to upgrade, certificate-rotate and debug, with its own failure modes that look like application failures.</li><li><strong>Startup ordering</strong> &mdash; the classic sidecar race where your app starts before the proxy is ready and its first calls fail.</li></ul>
+      <p>A reasonable sequence: Gateway API first, because you need an ingress anyway. Then NetworkPolicy, which covers most of what people want mTLS for internally. Reach for a mesh when you have a concrete requirement &mdash; mTLS for compliance, retries you cannot put in clients, L7 authorisation between services &mdash; not because the architecture diagram looks incomplete without one.</p>
+      <p>If you do want mTLS and nothing else, an eBPF CNI can give you transparent node-to-node encryption with no sidecars at all. That is a much smaller commitment than a full mesh and it covers the single most common compliance ask.</p>
+      <h2>What to actually do with this</h2>
+      <ul><li>Install a Gateway API implementation next to your ingress controller and port one route.</li><li>Write down the specific requirement that would justify a mesh. If you cannot name one, you have your answer.</li><li>Check whether your CNI can do transparent encryption before pricing a mesh.</li></ul>
+  </div>
+  <div class="back">
+    <b>This article covers one checkpoint on the roadmap.</b>
+    <a href="https://weteachkubernetes.com/#gateway-mesh">Open <strong>Gateway API and the mesh decision</strong> on the roadmap &rarr;</a>
+    — it lists what this depends on and everything else written about it.
+  </div>
+  <p class="fix">Something wrong or out of date?
+    <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=blog%3A%20gateway-api-and-the-mesh-decision">Open an issue</a> — corrections are
+    welcome and get credited.</p>
+</div></article>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Runtime detection and response — We Teach Kubernetes</title>
+<meta name="description" content="Seeing a container do something it should not, and having a plan for the next ten minutes rather than inventing one live.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/runtime-detection-and-response/">
+<link rel="stylesheet" href="../style.css">
+<meta property="og:title" content="Runtime detection and response">
+<meta property="og:description" content="Seeing a container do something it should not, and having a plan for the next ten minutes rather than inventing one live.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/runtime-detection-and-response/">
+<meta property="og:type" content="article">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<article><div class="wrap">
+  <div class="kicker">Security</div>
+  <h1>Runtime detection and response</h1>
+  <p class="dek">Seeing a container do something it should not, and having a plan for the next ten minutes rather than inventing one live.</p>
+  <div class="meta">
+    <span class="m tag">CKS</span><span class="m topic">Security</span><span class="m topic">Observability</span>
+    <span class="m">9 min read</span>
+    <span class="byline">by <a href="https://github.com/Kyle-Law">Kyle Law</a> · 2026-10-08</span>
+  </div>
+  <div class="body">
+      <p>Everything up to this point is prevention. Runtime detection assumes prevention failed, which over a long enough period it will. The question is whether you would notice.</p>
+      <h2>Where the signal comes from</h2>
+      <ul><li><strong>Syscalls</strong> &mdash; eBPF or a kernel module watching what processes actually do. Falco and Tetragon live here. Highest fidelity, highest volume.</li><li><strong>The audit log</strong> &mdash; every request to the API server. The only record of who did what to the cluster.</li><li><strong>Network flows</strong> &mdash; who talked to whom. Hubble, or any flow log.</li><li><strong>Image and process inventory</strong> &mdash; what is running that was not running yesterday.</li></ul>
+      <h2>Rules worth having on day one</h2>
+      <p>Falco ships hundreds of rules and the default set is noisy enough that people turn it off. Start with a handful that are nearly always true positives:</p>
+      <ul><li>A shell spawned inside a container that has no business running one.</li><li>Writes below <code>/etc</code> or <code>/usr/bin</code> in a running container.</li><li>A process reading <code>/var/run/secrets/kubernetes.io/serviceaccount/token</code> that is not your application.</li><li>An outbound connection to an address outside your egress allowlist.</li><li>Any attempt to mount <code>/var/run/docker.sock</code> or the container runtime socket.</li></ul>
+      <pre><code>- rule: Shell in a production container
+  desc: interactive shell started where none should exist
+  condition: &gt;
+    spawned_process and container
+    and proc.name in (bash, sh, zsh, ash)
+    and k8s.ns.name startswith &quot;prod-&quot;
+  output: &gt;
+    shell in container (user=%user.name container=%container.name
+    ns=%k8s.ns.name pod=%k8s.pod.name cmd=%proc.cmdline)
+  priority: WARNING</code></pre>
+      <div class="note">Put the <strong>namespace and pod name</strong> in every output. A detection that tells you something happened but not where is an alert you cannot act on, and it trains people to ignore the channel it arrives in.</div>
+      <h2>Your audit log is your only witness</h2>
+      <p>Syscall detection tells you what a container did. Only the API server audit log tells you what was done to the cluster &mdash; which token created that privileged pod, which identity read the Secret, what else that identity touched. It is off by default on many managed clusters and cannot be reconstructed afterwards.</p>
+      <pre><code>apiVersion: audit.k8s.io/v1
+kind: Policy
+rules:
+  - level: RequestResponse        <span class="c"># full bodies for the dangerous things</span>
+    resources:
+      - group: &quot;&quot;
+        resources: [&quot;secrets&quot;, &quot;serviceaccounts/token&quot;]
+      - group: &quot;rbac.authorization.k8s.io&quot;
+        resources: [&quot;*&quot;]
+  - level: Metadata               <span class="c"># who-did-what for everything else</span>
+    omitStages: [&quot;RequestReceived&quot;]</code></pre>
+      <div class="gotcha"><b>Check whether your audit log is on, and where it goes, before you need it.</b> The first hour of an incident response is usually spent discovering that the evidence was never collected. Full <code>RequestResponse</code> on everything is too expensive; metadata on everything plus full bodies on secrets and RBAC is the ratio that works.</div>
+      <h2>The next ten minutes, written down in advance</h2>
+      <ol><li><strong>Contain, do not kill.</strong> Deleting the pod destroys the evidence and the Deployment recreates it anyway. Instead, cut it off.</li><li><strong>Isolate with a policy.</strong> Label the pod and apply a NetworkPolicy that selects that label and allows nothing.</li><li><strong>Detach it from its Service</strong> by changing a label the selector depends on &mdash; traffic stops, the pod keeps running, state is preserved.</li><li><strong>Capture</strong> process list, open sockets, environment and the audit trail for its ServiceAccount.</li><li><strong>Rotate</strong> every credential that pod could reach, which is every Secret in its namespace.</li><li><strong>Then</strong> delete it.</li></ol>
+      <pre><code><span class="c"># isolate, keeping the process alive for inspection</span>
+kubectl label pod suspect-xyz quarantine=true
+kubectl label pod suspect-xyz app-                 <span class="c"># drop it out of the Service</span>
+
+<span class="c"># capture before anything else changes</span>
+kubectl exec suspect-xyz -- ps auxf &gt; /tmp/ps.txt
+kubectl exec suspect-xyz -- ss -tunap &gt; /tmp/sockets.txt</code></pre>
+      <p>That label-removal trick is the most useful one in the list. It takes the pod out of rotation instantly, the ReplicaSet notices the shortfall and starts a healthy replacement, and the suspect pod is left running and idle for you to look at.</p>
+      <h2>What to actually do with this</h2>
+      <ul><li>Deploy Falco with five rules rather than five hundred.</li><li>Confirm today whether your audit log is enabled and where it lands.</li><li>Write the six-step containment list somewhere findable, and rehearse the labelling once against a test pod.</li></ul>
+  </div>
+  <div class="back">
+    <b>This article covers one checkpoint on the roadmap.</b>
+    <a href="https://weteachkubernetes.com/#runtime-detect">Open <strong>Runtime detection and response</strong> on the roadmap &rarr;</a>
+    — it lists what this depends on and everything else written about it.
+  </div>
+  <p class="fix">Something wrong or out of date?
+    <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=blog%3A%20runtime-detection-and-response">Open an issue</a> — corrections are
+    welcome and get credited.</p>
+</div></article>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>

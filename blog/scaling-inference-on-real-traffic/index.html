@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scaling inference on real traffic — We Teach Kubernetes</title>
+<meta name="description" content="Queue-depth autoscaling, cold starts measured in minutes, and the bill as a design constraint rather than an afterthought.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/scaling-inference-on-real-traffic/">
+<link rel="stylesheet" href="../style.css">
+<meta property="og:title" content="Scaling inference on real traffic">
+<meta property="og:description" content="Queue-depth autoscaling, cold starts measured in minutes, and the bill as a design constraint rather than an afterthought.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/scaling-inference-on-real-traffic/">
+<meta property="og:type" content="article">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<article><div class="wrap">
+  <div class="kicker">AI inference and GPUs</div>
+  <h1>Scaling inference on real traffic</h1>
+  <p class="dek">Queue-depth autoscaling, cold starts measured in minutes, and the bill as a design constraint rather than an afterthought.</p>
+  <div class="meta">
+    <span class="m topic">Inference</span><span class="m topic">Scheduling</span><span class="m topic">Observability</span>
+    <span class="m">11 min read</span>
+    <span class="byline">by <a href="https://github.com/Kyle-Law">Kyle Law</a> · 2026-10-08</span>
+  </div>
+  <div class="body">
+      <p>Autoscaling a stateless web service is a solved problem with good defaults. Autoscaling inference breaks all of those defaults at once, and the reason is simple: a saturated GPU does not look busy to anything Kubernetes measures by default.</p>
+      <h2>Why CPU-based HPA fails</h2>
+      <p>A model server at 100% GPU utilisation with a queue thirty requests deep is typically using 15% CPU. The HPA sees an idle pod and scales <em>down</em>. Meanwhile latency is climbing and nothing in the control loop knows.</p>
+      <ul><li><strong>GPU utilisation</strong> is better, but it is a poor saturation signal &mdash; a GPU reads near 100% while still having headroom for more concurrent sequences.</li><li><strong>Queue depth</strong> (<code>num_requests_waiting</code>) is the honest signal. A non-zero queue means demand exceeds capacity, right now.</li><li><strong>Time to first token</strong> is what users feel, and it is the right thing to alert on even if you scale on queue depth.</li></ul>
+      <pre><code>apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: { name: llm }
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: llm }
+  minReplicas: 1
+  maxReplicas: 8
+  metrics:
+    - type: Pods
+      pods:
+        metric: { name: vllm_num_requests_waiting }
+        target: { type: AverageValue, averageValue: &quot;4&quot; }
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0        <span class="c"># react immediately</span>
+      policies: [{ type: Pods, value: 2, periodSeconds: 60 }]
+    scaleDown:
+      stabilizationWindowSeconds: 600      <span class="c"># 10 minutes of calm before shrinking</span>
+      policies: [{ type: Pods, value: 1, periodSeconds: 300 }]</code></pre>
+      <div class="note">The asymmetry in <code>behavior</code> is the important part and it is not the default. Scaling up late costs you a latency spike; scaling down early costs you a multi-minute cold start on the next request. When those are the two errors available, you want to be slow to shrink and quick to grow.</div>
+      <h2>Cold start is the whole design constraint</h2>
+      <p>Add it up honestly: node provisioning 60&ndash;180 seconds, image pull 30&ndash;120, model load 40&ndash;300, warm-up 10&ndash;30. Three to ten minutes from "we need another replica" to "it can serve". No autoscaler can hide that.</p>
+      <ul><li><strong>Keep a warm pool.</strong> <code>minReplicas</code> above zero, sized to your trough, is the only reliable answer for interactive traffic.</li><li><strong>Pre-pull images</strong> with a DaemonSet or a node image that already has them. Removes the largest variable chunk.</li><li><strong>Over-provision deliberately</strong> with low-priority placeholder pods, so a node is already warm and a real pod can preempt a placeholder instantly.</li><li><strong>Separate interactive from batch.</strong> Batch work tolerates cold starts and can use spot capacity; user-facing traffic cannot.</li></ul>
+      <h2>Scale to zero, honestly</h2>
+      <p>Scale to zero is attractive and only workable when something can hold the first request while a replica starts, and the caller tolerates minutes. That is true for internal tools and batch endpoints. It is not true for anything a person is waiting on. Decide which you have before adopting it.</p>
+      <h2>The bill as a design constraint</h2>
+      <p>An idle A100 costs roughly the same as a busy one. Utilisation is therefore the only cost lever that matters, and the arithmetic is unforgiving: a GPU at 20% utilisation is a GPU you are mostly paying to keep warm.</p>
+      <pre><code><span class="c"># the number that should be on a dashboard: tokens per GPU-hour</span>
+sum(rate(vllm_generation_tokens_total[1h]))
+  / count(DCGM_FI_DEV_GPU_UTIL)
+
+<span class="c"># and the one that explains it: how much of the time are GPUs doing nothing?</span>
+avg_over_time(DCGM_FI_DEV_GPU_UTIL[24h])</code></pre>
+      <ul><li><strong>Batch aggressively.</strong> Continuous batching in vLLM is the single largest throughput win available, and it is a flag.</li><li><strong>Right-size the model.</strong> An 8B model that fits one GPU often beats a 70B model across four, for tasks where quality is comparable.</li><li><strong>Quantise</strong> when accuracy allows &mdash; fewer GPUs for the same throughput.</li><li><strong>Spot for batch.</strong> With checkpointing, interruptions are a cost, not a failure.</li></ul>
+      <div class="gotcha"><b>Watch out for <code>maxSurge</code> on a GPU Deployment.</b> A rolling update with surge needs a spare GPU for the new pod before the old one goes away. On a cluster with no idle GPU, the new pod sits <code>Pending</code>, the old one never terminates, and the rollout hangs until <code>progressDeadlineSeconds</code> expires. Set <code>maxSurge: 0</code> and accept brief unavailability, or keep a spare GPU for deploys.</div>
+      <h2>What to actually do with this</h2>
+      <ul><li>Stop scaling on CPU. Export queue depth and scale on that.</li><li>Measure your real cold start, end to end, and set <code>minReplicas</code> from it.</li><li>Put tokens per GPU-hour on a dashboard. It changes conversations about cost.</li><li>Check <code>maxSurge</code> on every GPU Deployment you own.</li></ul>
+  </div>
+  <div class="back">
+    <b>This article covers one checkpoint on the roadmap.</b>
+    <a href="https://weteachkubernetes.com/#inference-scale">Open <strong>Scaling inference on real traffic</strong> on the roadmap &rarr;</a>
+    — it lists what this depends on and everything else written about it.
+  </div>
+  <p class="fix">Something wrong or out of date?
+    <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=blog%3A%20scaling-inference-on-real-traffic">Open an issue</a> — corrections are
+    welcome and get credited.</p>
+</div></article>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Control plane components and etcd — We Teach Kubernetes</title>
+<meta name="description" content="What each component owns, plus a real backup and restore of etcd on a cluster you can afford to destroy.">
+<link rel="canonical" href="https://blog.weteachkubernetes.com/control-plane-and-etcd/">
+<link rel="stylesheet" href="../style.css">
+<meta property="og:title" content="Control plane components and etcd">
+<meta property="og:description" content="What each component owns, plus a real backup and restore of etcd on a cluster you can afford to destroy.">
+<meta property="og:url" content="https://blog.weteachkubernetes.com/control-plane-and-etcd/">
+<meta property="og:type" content="article">
+</head>
+<body>
+
+<div class="site"><div class="wrap wide">
+  <a class="logo" href="/">we<i>teach</i>kubernetes <span style="color:#8795AE;font-weight:400">/ blog</span></a>
+  <nav>
+    <a href="/">All articles</a>
+    <a href="https://weteachkubernetes.com/">The roadmap</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<article><div class="wrap">
+  <div class="kicker">Running a cluster</div>
+  <h1>Control plane components and etcd</h1>
+  <p class="dek">What each component owns, plus a real backup and restore of etcd on a cluster you can afford to destroy.</p>
+  <div class="meta">
+    <span class="m tag">CKA</span>
+    <span class="m">11 min read</span>
+    <span class="byline">by <a href="https://github.com/Kyle-Law">Kyle Law</a> · 2026-10-08</span>
+  </div>
+  <div class="body">
+      <p>Four processes make the control plane, and knowing which one owns a decision is the difference between fixing a cluster and restarting things hopefully.</p>
+      <h2>Who owns what</h2>
+      <ul><li><strong>etcd</strong> &mdash; the only stateful thing. If it is gone, the cluster is gone.</li><li><strong>kube-apiserver</strong> &mdash; the only process that talks to etcd. Everything else talks to it. Stateless, so you can run several.</li><li><strong>kube-scheduler</strong> &mdash; decides which node a pod goes to, then writes that decision down. It does not start anything.</li><li><strong>kube-controller-manager</strong> &mdash; the built-in reconcile loops: Deployments, ReplicaSets, node lifecycle, endpoints.</li><li><strong>kubelet</strong> &mdash; on every node, the only thing that actually starts containers.</li></ul>
+      <p>A useful consequence: if the scheduler is down, running pods are completely unaffected and new pods sit in <code>Pending</code>. If the API server is down, running pods keep running and nothing can be changed or observed. Neither is an outage of your application &mdash; which is a surprise to most people the first time.</p>
+      <h2>Follow one apply through the system</h2>
+      <ol><li><code>kubectl</code> POSTs to the API server, which authenticates, authorises via RBAC, runs admission, validates, and writes to etcd.</li><li>The Deployment controller sees the new object and creates a ReplicaSet.</li><li>The ReplicaSet controller creates Pod objects with no <code>nodeName</code>.</li><li>The scheduler notices unassigned pods and writes a binding.</li><li>The kubelet on that node sees a pod assigned to it, pulls the image and starts containers through the CRI.</li><li>The kubelet reports status back; the endpoint controller adds the pod to Services once it is ready.</li></ol>
+      <div class="note">Nothing in that chain is a direct call to the next step. Each stage watches the API server and acts. That is why the system survives any one piece being briefly absent, and why &ldquo;nothing happened and there is no error&rdquo; is a normal failure mode &mdash; some watcher is not running.</div>
+      <h2>Static pods: the bootstrap trick</h2>
+      <p>On a kubeadm cluster the control plane runs as pods &mdash; but something has to start them before the control plane exists. The kubelet reads manifests straight off disk:</p>
+      <pre><code>ls /etc/kubernetes/manifests/
+<span class="c"># etcd.yaml  kube-apiserver.yaml  kube-controller-manager.yaml  kube-scheduler.yaml</span>
+
+<span class="c"># moving a file out of this directory stops that component, immediately</span>
+sudo mv /etc/kubernetes/manifests/kube-scheduler.yaml /tmp/
+kubectl get pods -n kube-system | grep scheduler    <span class="c"># gone</span>
+sudo mv /tmp/kube-scheduler.yaml /etc/kubernetes/manifests/    <span class="c"># back</span></code></pre>
+      <p>That is also the repair path when the API server will not start: you edit the manifest on disk, because you cannot use the API to fix the API.</p>
+      <h2>Back up etcd, then actually restore it</h2>
+      <pre><code>ETCDCTL_API=3 etcdctl snapshot save /backup/etcd-$(date +%F).db \
+  --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/server.crt \
+  --key=/etc/kubernetes/pki/etcd/server.key
+
+ETCDCTL_API=3 etcdctl snapshot status /backup/etcd-2026-10-08.db --write-out=table</code></pre>
+      <p>The restore is the part worth rehearsing, because it is not symmetrical with the backup. You stop the control plane, restore into a <em>new</em> data directory, point etcd at it, and start everything again:</p>
+      <pre><code>sudo mv /etc/kubernetes/manifests/*.yaml /tmp/manifests-backup/   <span class="c"># stop control plane</span>
+
+sudo ETCDCTL_API=3 etcdctl snapshot restore /backup/etcd-2026-10-08.db \
+  --data-dir=/var/lib/etcd-restored
+
+sudo vim /etc/kubernetes/manifests/etcd.yaml   <span class="c"># point hostPath at /var/lib/etcd-restored</span>
+sudo mv /tmp/manifests-backup/*.yaml /etc/kubernetes/manifests/</code></pre>
+      <div class="gotcha"><b>A snapshot you have never restored is not a backup.</b> Two mistakes show up every time: restoring into the existing data directory instead of a new one, and forgetting to update the <code>hostPath</code> in <code>etcd.yaml</code> &mdash; so etcd starts on the old data and the restore appears to have done nothing. Do it twice on a throwaway cluster.</div>
+      <h2>What to actually do with this</h2>
+      <ul><li>Build a <code>kind</code> or kubeadm cluster you do not care about and destroy etcd deliberately.</li><li>Stop the scheduler for two minutes and watch what breaks &mdash; less than you expect.</li><li>Write the restore procedure down as commands, not prose, and keep it somewhere you can reach without the cluster.</li></ul>
+  </div>
+  <div class="back">
+    <b>This article covers one checkpoint on the roadmap.</b>
+    <a href="https://weteachkubernetes.com/#control-plane">Open <strong>Control plane components and etcd</strong> on the roadmap &rarr;</a>
+    — it lists what this depends on and everything else written about it.
+  </div>
+  <p class="fix">Something wrong or out of date?
+    <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=blog%3A%20control-plane-and-etcd">Open an issue</a> — corrections are
+    welcome and get credited.</p>
+</div></article>
+
+<footer><div class="wrap wide">
+  Written for <a href="https://weteachkubernetes.com/">weteachkubernetes.com</a> &mdash; a Kubernetes roadmap taught by the
+  people who walked it. No exam content: the Linux Foundation NDA covers CKA, CKAD, CKS, KCNA, KCSA
+  and CKNE, so these articles teach the subject and never the questions.
+</div></footer>
+</body>
+</html>
