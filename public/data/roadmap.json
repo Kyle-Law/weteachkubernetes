@@ -107,6 +107,26 @@
               "by": "Kyle-Law",
               "minutes": 8,
               "added": "2026-10-08"
+            },
+            {
+              "type": "lab",
+              "title": "Kubernetes playground, no install",
+              "url": "https://killercoda.com/playgrounds/scenario/kubernetes",
+              "source": {
+                "name": "Killercoda",
+                "url": "https://killercoda.com"
+              },
+              "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Containers: the official concept pages",
+              "url": "https://kubernetes.io/docs/concepts/containers/",
+              "source": {
+                "name": "Kubernetes documentation",
+                "url": "https://kubernetes.io/docs/"
+              },
+              "added": "2026-10-08"
             }
           ]
         },
@@ -126,6 +146,26 @@
               "url": "https://blog.weteachkubernetes.com/the-api-object-model/",
               "by": "Kyle-Law",
               "minutes": 9,
+              "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Working with Kubernetes objects",
+              "url": "https://kubernetes.io/docs/concepts/overview/working-with-objects/",
+              "source": {
+                "name": "Kubernetes documentation",
+                "url": "https://kubernetes.io/docs/"
+              },
+              "added": "2026-10-08"
+            },
+            {
+              "type": "lab",
+              "title": "Interactive tutorial: deploy an app",
+              "url": "https://kubernetes.io/docs/tutorials/kubernetes-basics/",
+              "source": {
+                "name": "Kubernetes documentation",
+                "url": "https://kubernetes.io/docs/"
+              },
               "added": "2026-10-08"
             }
           ]
@@ -154,6 +194,16 @@
               "by": "Kyle-Law",
               "minutes": 10,
               "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Configure liveness, readiness and startup probes",
+              "url": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+              "source": {
+                "name": "Kubernetes documentation",
+                "url": "https://kubernetes.io/docs/"
+              },
+              "added": "2026-10-08"
             }
           ]
         },
@@ -174,6 +224,26 @@
               "by": "Kyle-Law",
               "minutes": 8,
               "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Secrets, and what they are not",
+              "url": "https://kubernetes.io/docs/concepts/configuration/secret/",
+              "source": {
+                "name": "Kubernetes documentation",
+                "url": "https://kubernetes.io/docs/"
+              },
+              "added": "2026-10-08"
+            },
+            {
+              "type": "repo",
+              "title": "External Secrets Operator",
+              "url": "https://external-secrets.io/latest/",
+              "source": {
+                "name": "External Secrets",
+                "url": "https://external-secrets.io"
+              },
+              "added": "2026-10-08"
             }
           ]
         },
@@ -193,6 +263,26 @@
               "url": "https://blog.weteachkubernetes.com/declarative-delivery/",
               "by": "Kyle-Law",
               "minutes": 9,
+              "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Argo CD: declarative GitOps",
+              "url": "https://argo-cd.readthedocs.io/en/stable/",
+              "source": {
+                "name": "Argo project",
+                "url": "https://argoproj.github.io"
+              },
+              "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Flux: GitOps toolkit",
+              "url": "https://fluxcd.io/flux/",
+              "source": {
+                "name": "Flux project",
+                "url": "https://fluxcd.io"
+              },
               "added": "2026-10-08"
             }
           ]
@@ -220,6 +310,26 @@
               "by": "Kyle-Law",
               "minutes": 11,
               "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Cluster architecture",
+              "url": "https://kubernetes.io/docs/concepts/architecture/",
+              "source": {
+                "name": "Kubernetes documentation",
+                "url": "https://kubernetes.io/docs/"
+              },
+              "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Operating etcd for Kubernetes",
+              "url": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/",
+              "source": {
+                "name": "Kubernetes documentation",
+                "url": "https://kubernetes.io/docs/"
+              },
+              "added": "2026-10-08"
             }
           ]
         },
@@ -241,6 +351,16 @@
               "by": "Kyle-Law",
               "minutes": 10,
               "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Using RBAC authorization",
+              "url": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+              "source": {
+                "name": "Kubernetes documentation",
+                "url": "https://kubernetes.io/docs/"
+              },
+              "added": "2026-10-08"
             }
           ]
         },
@@ -260,6 +380,26 @@
               "url": "https://blog.weteachkubernetes.com/troubleshooting-under-time-pressure/",
               "by": "Kyle-Law",
               "minutes": 9,
+              "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Debug running pods",
+              "url": "https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/",
+              "source": {
+                "name": "Kubernetes documentation",
+                "url": "https://kubernetes.io/docs/"
+              },
+              "added": "2026-10-08"
+            },
+            {
+              "type": "lab",
+              "title": "Killer Shell: CKA practice scenarios",
+              "url": "https://killercoda.com/killer-shell-cka",
+              "source": {
+                "name": "Killercoda / Kim Wuestkamp",
+                "url": "https://killercoda.com"
+              },
               "added": "2026-10-08"
             }
           ]
@@ -289,6 +429,26 @@
               "by": "Kyle-Law",
               "minutes": 12,
               "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Cluster networking concepts",
+              "url": "https://kubernetes.io/docs/concepts/cluster-administration/networking/",
+              "source": {
+                "name": "Kubernetes documentation",
+                "url": "https://kubernetes.io/docs/"
+              },
+              "added": "2026-10-08"
+            },
+            {
+              "type": "lab",
+              "title": "Cilium hands-on labs",
+              "url": "https://labs.isovalent.com/",
+              "source": {
+                "name": "Isovalent Labs",
+                "url": "https://labs.isovalent.com"
+              },
+              "added": "2026-10-08"
             }
           ]
         },
@@ -311,6 +471,36 @@
               "by": "Kyle-Law",
               "minutes": 10,
               "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Network policies",
+              "url": "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+              "source": {
+                "name": "Kubernetes documentation",
+                "url": "https://kubernetes.io/docs/"
+              },
+              "added": "2026-10-08"
+            },
+            {
+              "type": "repo",
+              "title": "Network policy editor",
+              "url": "https://editor.networkpolicy.io/",
+              "source": {
+                "name": "Isovalent",
+                "url": "https://isovalent.com"
+              },
+              "added": "2026-10-08"
+            },
+            {
+              "type": "lab",
+              "title": "Killer Shell: CKS practice scenarios",
+              "url": "https://killercoda.com/killer-shell-cks",
+              "source": {
+                "name": "Killercoda / Kim Wuestkamp",
+                "url": "https://killercoda.com"
+              },
+              "added": "2026-10-08"
             }
           ]
         },
@@ -330,6 +520,26 @@
               "url": "https://blog.weteachkubernetes.com/gateway-api-and-the-mesh-decision/",
               "by": "Kyle-Law",
               "minutes": 11,
+              "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Gateway API",
+              "url": "https://gateway-api.sigs.k8s.io/",
+              "source": {
+                "name": "Kubernetes SIG Network",
+                "url": "https://github.com/kubernetes-sigs/gateway-api"
+              },
+              "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Istio: do you need a mesh?",
+              "url": "https://istio.io/latest/docs/overview/what-is-istio/",
+              "source": {
+                "name": "Istio project",
+                "url": "https://istio.io"
+              },
               "added": "2026-10-08"
             }
           ]
@@ -359,6 +569,26 @@
               "by": "Kyle-Law",
               "minutes": 10,
               "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Pod Security Admission",
+              "url": "https://kubernetes.io/docs/concepts/security/pod-security-admission/",
+              "source": {
+                "name": "Kubernetes documentation",
+                "url": "https://kubernetes.io/docs/"
+              },
+              "added": "2026-10-08"
+            },
+            {
+              "type": "repo",
+              "title": "Kyverno policy library",
+              "url": "https://kyverno.io/policies/",
+              "source": {
+                "name": "Kyverno project",
+                "url": "https://kyverno.io"
+              },
+              "added": "2026-10-08"
             }
           ]
         },
@@ -378,6 +608,26 @@
               "url": "https://blog.weteachkubernetes.com/supply-chain-and-image-provenance/",
               "by": "Kyle-Law",
               "minutes": 9,
+              "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Sigstore and cosign",
+              "url": "https://docs.sigstore.dev/",
+              "source": {
+                "name": "Sigstore project",
+                "url": "https://sigstore.dev"
+              },
+              "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "SLSA: supply-chain levels",
+              "url": "https://slsa.dev/spec/v1.0/levels",
+              "source": {
+                "name": "SLSA",
+                "url": "https://slsa.dev"
+              },
               "added": "2026-10-08"
             }
           ]
@@ -399,6 +649,26 @@
               "url": "https://blog.weteachkubernetes.com/runtime-detection-and-response/",
               "by": "Kyle-Law",
               "minutes": 9,
+              "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Falco rules and fields",
+              "url": "https://falco.org/docs/",
+              "source": {
+                "name": "Falco project",
+                "url": "https://falco.org"
+              },
+              "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Auditing the API server",
+              "url": "https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/",
+              "source": {
+                "name": "Kubernetes documentation",
+                "url": "https://kubernetes.io/docs/"
+              },
               "added": "2026-10-08"
             }
           ]
@@ -427,6 +697,26 @@
               "by": "Kyle-Law",
               "minutes": 11,
               "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "NVIDIA GPU Operator",
+              "url": "https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/index.html",
+              "source": {
+                "name": "NVIDIA",
+                "url": "https://docs.nvidia.com"
+              },
+              "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Scheduling GPUs",
+              "url": "https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/",
+              "source": {
+                "name": "Kubernetes documentation",
+                "url": "https://kubernetes.io/docs/"
+              },
+              "added": "2026-10-08"
             }
           ]
         },
@@ -446,6 +736,26 @@
               "url": "https://blog.weteachkubernetes.com/serving-a-model-like-a-production-service/",
               "by": "Kyle-Law",
               "minutes": 12,
+              "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "vLLM documentation",
+              "url": "https://docs.vllm.ai/en/latest/",
+              "source": {
+                "name": "vLLM project",
+                "url": "https://docs.vllm.ai"
+              },
+              "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "KServe",
+              "url": "https://kserve.github.io/website/",
+              "source": {
+                "name": "KServe project",
+                "url": "https://kserve.github.io"
+              },
               "added": "2026-10-08"
             }
           ]
@@ -467,6 +777,16 @@
               "url": "https://blog.weteachkubernetes.com/scaling-inference-on-real-traffic/",
               "by": "Kyle-Law",
               "minutes": 11,
+              "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Gateway API Inference Extension",
+              "url": "https://gateway-api-inference-extension.sigs.k8s.io/",
+              "source": {
+                "name": "Kubernetes SIG Network",
+                "url": "https://github.com/kubernetes-sigs/gateway-api-inference-extension"
+              },
               "added": "2026-10-08"
             }
           ]
@@ -495,6 +815,26 @@
               "by": "Kyle-Law",
               "minutes": 10,
               "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Karpenter",
+              "url": "https://karpenter.sh/",
+              "source": {
+                "name": "Karpenter",
+                "url": "https://karpenter.sh"
+              },
+              "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Workload autoscaling",
+              "url": "https://kubernetes.io/docs/concepts/workloads/autoscaling/",
+              "source": {
+                "name": "Kubernetes documentation",
+                "url": "https://kubernetes.io/docs/"
+              },
+              "added": "2026-10-08"
             }
           ]
         },
@@ -513,6 +853,26 @@
               "url": "https://blog.weteachkubernetes.com/slos-people-actually-use/",
               "by": "Kyle-Law",
               "minutes": 9,
+              "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Alerting on SLOs",
+              "url": "https://sre.google/workbook/alerting-on-slos/",
+              "source": {
+                "name": "Google SRE Workbook",
+                "url": "https://sre.google"
+              },
+              "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Prometheus alerting practices",
+              "url": "https://prometheus.io/docs/practices/alerting/",
+              "source": {
+                "name": "Prometheus project",
+                "url": "https://prometheus.io"
+              },
               "added": "2026-10-08"
             }
           ]
@@ -534,10 +894,34 @@
               "by": "Kyle-Law",
               "minutes": 12,
               "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "The Kubebuilder book",
+              "url": "https://book.kubebuilder.io/",
+              "source": {
+                "name": "Kubernetes SIGs",
+                "url": "https://github.com/kubernetes-sigs/kubebuilder"
+              },
+              "added": "2026-10-08"
+            },
+            {
+              "type": "article",
+              "title": "Custom resources",
+              "url": "https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/",
+              "source": {
+                "name": "Kubernetes documentation",
+                "url": "https://kubernetes.io/docs/"
+              },
+              "added": "2026-10-08"
             }
           ]
         }
       ]
     }
-  ]
+  ],
+  "_resource_kinds": {
+    "by": "a contributor who opted in; must resolve to a handle in contributors.json",
+    "source": "a curated link to material somebody else published. Credits the publisher and does NOT imply they joined this project. A resource has one or the other, never both."
+  }
 }

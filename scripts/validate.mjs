@@ -15,10 +15,29 @@ ids.filter((x, i) => ids.indexOf(x) !== i).forEach((x) => fail.push(`duplicate c
 for (const cp of checkpoints) {
   for (const t of cp.tags) if (!tags.has(t)) fail.push(`${cp.id}: tag "${t}" is not in the registry`);
   for (const r of cp.resources) {
-    if (!handles.has(r.by)) fail.push(`${cp.id}: "${r.title}" credits @${r.by}, who is not in contributors.json`);
-    if (!/^https:\/\//.test(r.url)) fail.push(`${cp.id}: "${r.title}" has a non-https url`);
+    const where = `${cp.id}: "${r.title}"`;
+
+    // A resource is either written by a contributor who opted in, or a curated link to
+    // somebody else's material. Claiming both would imply a membership nobody agreed to.
+    if (r.by && r.source) fail.push(`${where} has both "by" and "source" - pick one`);
+    if (!r.by && !r.source) fail.push(`${where} needs either "by" or "source"`);
+
+    if (r.by && !handles.has(r.by)) {
+      fail.push(`${where} credits @${r.by}, who is not in contributors.json`);
+    }
+    if (r.source) {
+      if (!r.source.name) fail.push(`${where} has a source with no name`);
+      if (!/^https:\/\//.test(r.source.url || '')) fail.push(`${where} source url must be https`);
+      if (r.minutes !== undefined) {
+        fail.push(`${where} is a curated link; leave out "minutes" rather than estimating `
+          + `someone else's reading time`);
+      }
+    } else if (!Number.isInteger(r.minutes) || r.minutes < 1) {
+      fail.push(`${where} has bad minutes`);
+    }
+
+    if (!/^https:\/\//.test(r.url)) fail.push(`${where} has a non-https url`);
     if (!['article', 'video', 'lab', 'repo'].includes(r.type)) fail.push(`${cp.id}: bad type "${r.type}"`);
-    if (!Number.isInteger(r.minutes) || r.minutes < 1) fail.push(`${cp.id}: "${r.title}" has bad minutes`);
   }
 }
 for (const p of people.people) {
@@ -34,4 +53,7 @@ if (fail.length) {
   fail.forEach((f) => console.error(`  - ${f}`));
   process.exit(1);
 }
-console.log(`ok: ${checkpoints.length} checkpoints, ${res.length} tutorials, ${people.people.length} contributors`);
+const own = res.filter((r) => r.by).length;
+const curated = res.length - own;
+console.log(`ok: ${checkpoints.length} checkpoints, ${own} contributed + ${curated} curated `
+  + `= ${res.length} resources, ${people.people.length} contributors`);
