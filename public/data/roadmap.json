@@ -213,6 +213,7 @@
           "summary": "ConfigMap reload behaviour, projected volumes, and why your secret is base64 and not encrypted.",
           "tags": [
             "CKAD",
+            "CKS",
             "Security"
           ],
           "hours": 4,
@@ -339,8 +340,9 @@
           "summary": "Roles that are actually least-privilege, and the three places tenancy leaks anyway.",
           "tags": [
             "CKA",
-            "Security",
-            "KCSA"
+            "CKS",
+            "KCSA",
+            "Security"
           ],
           "hours": 5,
           "resources": [

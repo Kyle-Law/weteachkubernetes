@@ -1,0 +1,238 @@
+{
+  "_note": "The published CKS curriculum, mapped onto this roadmap. The domains, weights and competency wording are the Linux Foundation's published curriculum, not exam content: the NDA covers what appears in the exam, and this is the public syllabus every training provider restates.",
+  "_source": {
+    "name": "CNCF Curriculum repository",
+    "url": "https://github.com/cncf/curriculum",
+    "also": "https://training.linuxfoundation.org/certification/certified-kubernetes-security-specialist/"
+  },
+  "_status_meaning": {
+    "covered": "a checkpoint here addresses this competency directly",
+    "partial": "touched on, but the listed gap is not written up",
+    "gap": "nothing on this roadmap covers it yet"
+  },
+  "_coverage_caveat": "The percentage is a rough weighting - full counts 1, partial counts 0.5 - and is a reading of the wording, not an official mapping. Treat it as a writing backlog, not as exam readiness.",
+  "exam": "CKS",
+  "version_seen": "as published 2026-10",
+  "domains": [
+    {
+      "id": "cluster-setup",
+      "title": "Cluster Setup",
+      "weight": 15,
+      "competencies": [
+        {
+          "text": "Use Network security policies to restrict cluster level access",
+          "status": "covered",
+          "covers": [
+            "network-policy"
+          ]
+        },
+        {
+          "text": "Use CIS benchmark to review the security configuration of Kubernetes components (etcd, kubelet, kubedns, kubeapi)",
+          "status": "gap",
+          "missing": "kube-bench, reading a CIS report, and which findings actually matter on a managed cluster"
+        },
+        {
+          "text": "Properly set up Ingress with TLS",
+          "status": "partial",
+          "covers": [
+            "gateway-mesh"
+          ],
+          "missing": "TLS termination on a Gateway listener, certificate issuance with cert-manager, and redirecting plaintext"
+        },
+        {
+          "text": "Protect node metadata and endpoints",
+          "status": "gap",
+          "missing": "blocking the cloud metadata endpoint from pods, and closing the kubelet read-only port"
+        },
+        {
+          "text": "Verify platform binaries before deploying",
+          "status": "partial",
+          "covers": [
+            "supply-chain"
+          ],
+          "missing": "verifying Kubernetes release checksums and signatures specifically, as distinct from your own images"
+        }
+      ]
+    },
+    {
+      "id": "cluster-hardening",
+      "title": "Cluster Hardening",
+      "weight": 15,
+      "competencies": [
+        {
+          "text": "Use Role Based Access Controls to minimize exposure",
+          "status": "covered",
+          "covers": [
+            "rbac-tenancy"
+          ]
+        },
+        {
+          "text": "Exercise caution in using service accounts e.g. disable defaults, minimize permissions on newly created ones",
+          "status": "covered",
+          "covers": [
+            "rbac-tenancy"
+          ]
+        },
+        {
+          "text": "Restrict access to Kubernetes API",
+          "status": "partial",
+          "covers": [
+            "rbac-tenancy"
+          ],
+          "missing": "anonymous auth, API server flags, and putting the control plane behind a network boundary"
+        },
+        {
+          "text": "Upgrade Kubernetes to avoid vulnerabilities",
+          "status": "gap",
+          "missing": "a real kubeadm upgrade, version skew rules, and draining nodes without breaking a PDB"
+        }
+      ]
+    },
+    {
+      "id": "system-hardening",
+      "title": "System Hardening",
+      "weight": 10,
+      "competencies": [
+        {
+          "text": "Minimize host OS footprint (reduce attack surface)",
+          "status": "gap",
+          "missing": "minimal node images, removing packages and services, and why a container-optimised OS changes the threat model"
+        },
+        {
+          "text": "Using least-privilege identity and access management",
+          "status": "partial",
+          "covers": [
+            "rbac-tenancy"
+          ],
+          "missing": "cloud IAM and workload identity, which is where this usually goes wrong - the in-cluster half is covered"
+        },
+        {
+          "text": "Minimize external access to the network",
+          "status": "covered",
+          "covers": [
+            "network-policy"
+          ]
+        },
+        {
+          "text": "Appropriately use kernel hardening tools such as AppArmor, seccomp",
+          "status": "partial",
+          "covers": [
+            "admission-policy"
+          ],
+          "missing": "writing and loading a seccomp profile, AppArmor profiles, and RuntimeDefault as a baseline"
+        }
+      ]
+    },
+    {
+      "id": "microservice-vulnerabilities",
+      "title": "Minimize Microservice Vulnerabilities",
+      "weight": 20,
+      "competencies": [
+        {
+          "text": "Use appropriate pod security standards",
+          "status": "covered",
+          "covers": [
+            "admission-policy"
+          ]
+        },
+        {
+          "text": "Manage Kubernetes secrets",
+          "status": "covered",
+          "covers": [
+            "config-secrets"
+          ]
+        },
+        {
+          "text": "Understand and implement isolation techniques (multi-tenancy, sandboxed containers, etc.)",
+          "status": "partial",
+          "covers": [
+            "rbac-tenancy"
+          ],
+          "missing": "sandboxed runtimes - gVisor and Kata - and when the kernel boundary is not enough"
+        },
+        {
+          "text": "Implement Pod-to-Pod encryption (Cilium, Istio)",
+          "status": "partial",
+          "covers": [
+            "gateway-mesh"
+          ],
+          "missing": "actually turning on WireGuard or IPsec in Cilium, or mTLS in Istio, rather than arguing about whether to"
+        }
+      ]
+    },
+    {
+      "id": "supply-chain",
+      "title": "Supply Chain Security",
+      "weight": 20,
+      "competencies": [
+        {
+          "text": "Minimize base image footprint",
+          "status": "covered",
+          "covers": [
+            "containers-before-k8s"
+          ]
+        },
+        {
+          "text": "Understand your supply chain (e.g. SBOM, CI/CD, artifact repositories)",
+          "status": "covered",
+          "covers": [
+            "supply-chain"
+          ]
+        },
+        {
+          "text": "Secure your supply chain (permitted registries, sign and validate artifacts, etc.)",
+          "status": "covered",
+          "covers": [
+            "supply-chain",
+            "admission-policy"
+          ]
+        },
+        {
+          "text": "Perform static analysis of user workloads and container images (e.g. Kubesec, KubeLinter)",
+          "status": "gap",
+          "missing": "kubesec, kube-linter and Trivy in CI, and which findings are worth failing a build over"
+        }
+      ]
+    },
+    {
+      "id": "monitoring-runtime",
+      "title": "Monitoring, Logging and Runtime Security",
+      "weight": 20,
+      "competencies": [
+        {
+          "text": "Perform behavioral analytics to detect malicious activities",
+          "status": "covered",
+          "covers": [
+            "runtime-detect"
+          ]
+        },
+        {
+          "text": "Detect threats within physical infrastructure, apps, networks, data, users and workloads",
+          "status": "covered",
+          "covers": [
+            "runtime-detect"
+          ]
+        },
+        {
+          "text": "Investigate and identify phases of attack and bad actors within the environment",
+          "status": "covered",
+          "covers": [
+            "runtime-detect"
+          ]
+        },
+        {
+          "text": "Ensure immutability of containers at runtime",
+          "status": "gap",
+          "missing": "readOnlyRootFilesystem, dropping write access to the image layer, and enforcing it at admission"
+        },
+        {
+          "text": "Use Kubernetes audit logs to monitor access",
+          "status": "covered",
+          "covers": [
+            "runtime-detect"
+          ]
+        }
+      ]
+    }
+  ]
+}

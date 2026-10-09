@@ -30,8 +30,10 @@ what appears in CKA, CKAD, CKS, KCNA, KCSA and CKNE. Teach the subject, never th
 ```
 public/              the roadmap site, deployed to weteachkubernetes.com
   index.html         one page; the data below is inlined at build time
-  data/roadmap.json  stages, checkpoints, tags, and every tutorial
-  data/contributors.json   people, keyed by GitHub handle
+  cks/index.html     the published CKS curriculum mapped onto the roadmap, gaps included
+  data/roadmap.json  stages, checkpoints, tags, and every resource
+  data/contributors.json      contributors; handle plus anything GitHub cannot know
+  data/cks-curriculum.json    the CKS mapping, and the source it came from
 blog/                generated article pages, deployed to blog.weteachkubernetes.com
 functions/           Cloudflare Pages Functions: sign-in, progress, contribution API
 lib/                 session handling and a small GitHub App client
@@ -39,6 +41,8 @@ scripts/
   blog_content.py    the prose for every article - edit here, not in blog/
   build_blog.py      renders blog/ from blog_content.py
   validate.mjs       the data check CI runs on every pull request
+  build_cks.py       renders public/cks/ from the curriculum mapping
+  sync_contributors.py  pulls names and avatars from the GitHub API
   add-dns.sh         attaches the custom domains
 k8s-ai-roadmap.json  an earlier, unused draft of a Kubernetes-for-AI graph, kept for reference
 ```
@@ -49,7 +53,9 @@ k8s-ai-roadmap.json  an earlier, unused draft of a Kubernetes-for-AI graph, kept
 npm install
 npm run check          # validate the data files
 npm run dev            # serve public/ with functions, at localhost:8788
-python3 scripts/build_blog.py   # regenerate blog/ after editing article prose
+python3 scripts/build_blog.py        # regenerate blog/ after editing article prose
+python3 scripts/build_cks.py         # regenerate public/cks/ after editing the mapping
+python3 scripts/sync_contributors.py # refresh profiles and avatars from GitHub
 ```
 
 ## Deploying

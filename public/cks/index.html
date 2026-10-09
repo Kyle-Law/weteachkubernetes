@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CKS curriculum, mapped — We Teach Kubernetes</title>
+<meta name="description" content="Every competency in the published CKS curriculum, mapped to a
+  checkpoint on this roadmap - including the 6 that nothing covers yet.">
+<link rel="canonical" href="https://weteachkubernetes.com/cks/">
+<meta property="og:title" content="CKS curriculum, mapped to a roadmap">
+<meta property="og:description" content="26 competencies, 6 domains, and an honest list of what is
+  not written up yet.">
+<meta property="og:url" content="https://weteachkubernetes.com/cks/">
+<style>
+:root{
+  color-scheme:light;
+  --brand:#326CE5; --brand-d:#2457C5; --brand-l:#E8EFFD;
+  --teal:#0F8F86; --teal-l:#E0F5F2;
+  --warm:#C2761A; --warm-l:#FBF1E2;
+  --rose:#B3456B; --rose-l:#FBEBF0;
+  --ok:#17795E; --ok-l:#E4F4EC; --ok-b:#8FCBB4;
+  --ink:#10203A; --muted:#566480; --faint:#8795AE;
+  --bg:#FFFFFF; --bg-2:#F5F8FD; --line:#DCE5F2;
+  --hero:#0E1E38; --hero-muted:#A8B8D4; --hero-accent:#7AA7F5;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--sans); color:var(--ink); background:var(--bg-2); line-height:1.6}
+.wrap{max-width:900px; margin:0 auto; padding:0 24px}
+h1,h2,h3{line-height:1.22; margin:0 0 .4em; letter-spacing:-.015em}
+a{color:var(--brand)}
+
+.site{background:var(--bg); border-bottom:1px solid var(--line)}
+.site .wrap{display:flex; align-items:center; gap:16px; padding-block:13px}
+.logo{font-weight:700; font-size:15px; text-decoration:none; color:var(--ink)}
+.logo i{color:var(--brand); font-style:normal}
+.site nav{display:flex; gap:16px; font-size:13.5px; margin-left:auto}
+.site nav a{color:var(--muted); text-decoration:none}
+.site nav a:hover{color:var(--brand)}
+
+header.h{background:var(--hero); color:#fff; padding:46px 0 40px}
+header.h .kick{font-family:var(--mono); font-size:11px; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--hero-accent); margin-bottom:12px}
+header.h h1{font-size:clamp(1.7rem,4.4vw,2.5rem)}
+header.h h1 i{color:var(--hero-accent); font-style:normal}
+header.h p{color:var(--hero-muted); max-width:66ch; margin:13px 0 0}
+.stats{display:flex; flex-wrap:wrap; margin-top:26px}
+.stats div{padding:0 20px; border-left:1px solid rgba(255,255,255,.16); color:#9FAABD;
+  font-size:11.5px; letter-spacing:.05em; text-transform:uppercase}
+.stats div:first-child{border-left:0; padding-left:0}
+.stats b{display:block; font-family:var(--mono); font-size:23px; color:#fff; text-transform:none}
+
+.src{background:var(--brand-l); border-left:3px solid var(--brand); padding:14px 17px;
+  border-radius:0 9px 9px 0; font-size:14px; color:var(--brand-d); margin:22px 0}
+.src b{color:var(--ink)}
+.src a{color:var(--brand-d)}
+.caveat{border-left:3px solid var(--warm); background:var(--warm-l); padding:13px 16px;
+  border-radius:0 9px 9px 0; font-size:14px; color:#5E4413; margin:0 0 22px}
+.caveat b{color:#3F2D08}
+
+.dom{background:var(--bg); border:1px solid var(--line); border-radius:13px; margin:0 0 18px;
+  overflow:hidden}
+.dh{display:flex; gap:12px; align-items:baseline; flex-wrap:wrap; padding:16px 20px 12px}
+.dh h2{font-size:1.08rem; margin:0}
+.dh .wt{font-family:var(--mono); font-size:11.5px; color:var(--faint)}
+.dh .sc{font-family:var(--mono); font-size:11.5px; color:var(--brand-d); margin-left:auto;
+  background:var(--brand-l); border-radius:99px; padding:2px 9px}
+.bar{height:4px; background:var(--line)}
+.bar i{display:block; height:100%; background:var(--brand)}
+ul.comps{list-style:none; margin:0; padding:0}
+li.c{display:flex; gap:12px; padding:14px 20px; border-top:1px solid var(--line)}
+li.c .chip{font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:.05em;
+  padding:3px 8px; border-radius:99px; height:fit-content; white-space:nowrap; flex:none;
+  min-width:112px; text-align:center}
+li.covered .chip{background:var(--ok-l); color:var(--ok)}
+li.partial .chip{background:var(--warm-l); color:var(--warm)}
+li.gap .chip{background:var(--rose-l); color:var(--rose)}
+li.c .body{flex:1; min-width:0}
+li.c p.t{margin:0; font-size:14.5px}
+li.gap p.t{font-weight:600}
+.where{margin-top:8px; display:flex; gap:10px; flex-wrap:wrap}
+.lk{display:inline-flex; gap:8px; align-items:center; font-size:13px}
+a.cp{text-decoration:none; background:var(--bg-2); border:1px solid var(--line); border-radius:7px;
+  padding:3px 9px}
+a.cp:hover{border-color:var(--brand); background:var(--brand-l)}
+a.art{font-family:var(--mono); font-size:11.5px; text-decoration:none}
+a.art:hover{text-decoration:underline}
+a.write{font-family:var(--mono); font-size:11.5px; color:var(--rose); text-decoration:none;
+  border:1px dashed var(--rose); border-radius:7px; padding:3px 9px}
+a.write:hover{background:var(--rose-l)}
+.miss{margin-top:7px; font-size:13px; color:var(--muted)}
+.miss b{color:var(--ink); font-weight:600}
+
+.next{background:var(--bg); border:1px solid var(--line); border-radius:13px; padding:20px;
+  margin:26px 0}
+.next h2{font-size:1.08rem}
+.next p{font-size:14px; color:var(--muted); margin:0 0 14px}
+table{width:100%; border-collapse:collapse; font-size:13.5px}
+th,td{text-align:left; padding:9px 10px; border-bottom:1px solid var(--line)}
+th{font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--faint)}
+td.w{font-family:var(--mono); color:var(--rose); white-space:nowrap; width:1%}
+tr:last-child td{border-bottom:0}
+footer{border-top:1px solid var(--line); background:var(--bg); padding:26px 0 48px;
+  color:var(--faint); font-size:12.5px}
+@media(max-width:620px){
+  li.c{flex-direction:column; gap:8px} li.c .chip{min-width:0}
+  .dh .sc{margin-left:0} .stats div{padding:0 14px}
+}
+</style>
+</head>
+<body>
+
+<div class="site"><div class="wrap">
+  <a class="logo" href="/">we<i>teach</i>kubernetes</a>
+  <nav>
+    <a href="/">Roadmap</a>
+    <a href="/cks/">CKS</a>
+    <a href="https://blog.weteachkubernetes.com/">Articles</a>
+    <a href="https://github.com/Kyle-Law/weteachkubernetes">GitHub</a>
+  </nav>
+</div></div>
+
+<header class="h"><div class="wrap">
+  <div class="kick">Certified Kubernetes Security Specialist</div>
+  <h1>The CKS curriculum, <i>mapped</i></h1>
+  <p>Every competency the Linux Foundation publishes for the CKS, against what this roadmap
+  actually covers — including the 6 that nothing covers yet. The gaps are the
+  useful part: they are the writing backlog.</p>
+  <div class="stats">
+    <div><b>26</b>competencies</div>
+    <div><b>13</b>written up</div>
+    <div><b>7</b>partial</div>
+    <div><b>6</b>gaps</div>
+    <div><b>66%</b>weighted coverage</div>
+  </div>
+</div></header>
+
+<div class="wrap">
+
+  <div class="src"><b>Where this comes from.</b> The domains, weights and competency wording are the
+  Linux Foundation's published curriculum, mirrored in the
+  <a href="https://github.com/cncf/curriculum" target="_blank" rel="noopener">CNCF curriculum repository</a> and
+  on the <a href="https://training.linuxfoundation.org/certification/certified-kubernetes-security-specialist/" target="_blank" rel="noopener">certification page</a>.
+  That is the public syllabus, not exam content — the NDA covers what appears in the exam, and
+  nothing here restates a task or a question. Check the official source for the current version
+  before relying on this; curricula change.</div>
+
+  <div class="caveat"><b>The percentage is a rough weighting, not a readiness score.</b> A fully
+  written competency counts 1, a partial counts 0.5, and the judgement of which is which is my
+  reading of the wording rather than an official mapping. It tells you what is missing from this
+  roadmap. It does not tell you whether you would pass.</div>
+
+
+  <section class="dom">
+    <div class="dh">
+      <h2>Cluster Setup</h2>
+      <span class="wt">15% of the exam</span>
+      <span class="sc">40% written here</span>
+    </div>
+    <div class="bar"><i style="width:40%"></i></div>
+    <ul class="comps">
+      <li class="c covered">
+        <span class="chip">written up</span>
+        <div class="body"><p class="t">Use Network security policies to restrict cluster level access</p><div class="where"><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#network-policy">Network policy that someone can debug</a> <a class="art" href="https://blog.weteachkubernetes.com/network-policy-you-can-debug/" target="_blank" rel="noopener">read it &rarr;</a></span></div></div>
+      </li>
+      <li class="c gap">
+        <span class="chip">not written yet</span>
+        <div class="body"><p class="t">Use CIS benchmark to review the security configuration of Kubernetes components (etcd, kubelet, kubedns, kubeapi)</p><div class="miss"><b>Missing:</b> kube-bench, reading a CIS report, and which findings actually matter on a managed cluster</div><div class="where"><a class="write" href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=needs a write-up: Use CIS benchmark to review the security configuration of Ku">claim this one &rarr;</a></div></div>
+      </li>
+      <li class="c partial">
+        <span class="chip">partly covered</span>
+        <div class="body"><p class="t">Properly set up Ingress with TLS</p><div class="where"><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#gateway-mesh">Gateway API and the mesh decision</a> <a class="art" href="https://blog.weteachkubernetes.com/gateway-api-and-the-mesh-decision/" target="_blank" rel="noopener">read it &rarr;</a></span></div><div class="miss"><b>Missing:</b> TLS termination on a Gateway listener, certificate issuance with cert-manager, and redirecting plaintext</div></div>
+      </li>
+      <li class="c gap">
+        <span class="chip">not written yet</span>
+        <div class="body"><p class="t">Protect node metadata and endpoints</p><div class="miss"><b>Missing:</b> blocking the cloud metadata endpoint from pods, and closing the kubelet read-only port</div><div class="where"><a class="write" href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=needs a write-up: Protect node metadata and endpoints">claim this one &rarr;</a></div></div>
+      </li>
+      <li class="c partial">
+        <span class="chip">partly covered</span>
+        <div class="body"><p class="t">Verify platform binaries before deploying</p><div class="where"><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#supply-chain">Supply chain and image provenance</a> <a class="art" href="https://blog.weteachkubernetes.com/supply-chain-and-image-provenance/" target="_blank" rel="noopener">read it &rarr;</a></span></div><div class="miss"><b>Missing:</b> verifying Kubernetes release checksums and signatures specifically, as distinct from your own images</div></div>
+      </li></ul>
+  </section>
+  <section class="dom">
+    <div class="dh">
+      <h2>Cluster Hardening</h2>
+      <span class="wt">15% of the exam</span>
+      <span class="sc">62% written here</span>
+    </div>
+    <div class="bar"><i style="width:62%"></i></div>
+    <ul class="comps">
+      <li class="c covered">
+        <span class="chip">written up</span>
+        <div class="body"><p class="t">Use Role Based Access Controls to minimize exposure</p><div class="where"><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#rbac-tenancy">RBAC and multi-tenancy</a> <a class="art" href="https://blog.weteachkubernetes.com/rbac-and-multi-tenancy/" target="_blank" rel="noopener">read it &rarr;</a></span></div></div>
+      </li>
+      <li class="c covered">
+        <span class="chip">written up</span>
+        <div class="body"><p class="t">Exercise caution in using service accounts e.g. disable defaults, minimize permissions on newly created ones</p><div class="where"><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#rbac-tenancy">RBAC and multi-tenancy</a> <a class="art" href="https://blog.weteachkubernetes.com/rbac-and-multi-tenancy/" target="_blank" rel="noopener">read it &rarr;</a></span></div></div>
+      </li>
+      <li class="c partial">
+        <span class="chip">partly covered</span>
+        <div class="body"><p class="t">Restrict access to Kubernetes API</p><div class="where"><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#rbac-tenancy">RBAC and multi-tenancy</a> <a class="art" href="https://blog.weteachkubernetes.com/rbac-and-multi-tenancy/" target="_blank" rel="noopener">read it &rarr;</a></span></div><div class="miss"><b>Missing:</b> anonymous auth, API server flags, and putting the control plane behind a network boundary</div></div>
+      </li>
+      <li class="c gap">
+        <span class="chip">not written yet</span>
+        <div class="body"><p class="t">Upgrade Kubernetes to avoid vulnerabilities</p><div class="miss"><b>Missing:</b> a real kubeadm upgrade, version skew rules, and draining nodes without breaking a PDB</div><div class="where"><a class="write" href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=needs a write-up: Upgrade Kubernetes to avoid vulnerabilities">claim this one &rarr;</a></div></div>
+      </li></ul>
+  </section>
+  <section class="dom">
+    <div class="dh">
+      <h2>System Hardening</h2>
+      <span class="wt">10% of the exam</span>
+      <span class="sc">50% written here</span>
+    </div>
+    <div class="bar"><i style="width:50%"></i></div>
+    <ul class="comps">
+      <li class="c gap">
+        <span class="chip">not written yet</span>
+        <div class="body"><p class="t">Minimize host OS footprint (reduce attack surface)</p><div class="miss"><b>Missing:</b> minimal node images, removing packages and services, and why a container-optimised OS changes the threat model</div><div class="where"><a class="write" href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=needs a write-up: Minimize host OS footprint (reduce attack surface)">claim this one &rarr;</a></div></div>
+      </li>
+      <li class="c partial">
+        <span class="chip">partly covered</span>
+        <div class="body"><p class="t">Using least-privilege identity and access management</p><div class="where"><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#rbac-tenancy">RBAC and multi-tenancy</a> <a class="art" href="https://blog.weteachkubernetes.com/rbac-and-multi-tenancy/" target="_blank" rel="noopener">read it &rarr;</a></span></div><div class="miss"><b>Missing:</b> cloud IAM and workload identity, which is where this usually goes wrong - the in-cluster half is covered</div></div>
+      </li>
+      <li class="c covered">
+        <span class="chip">written up</span>
+        <div class="body"><p class="t">Minimize external access to the network</p><div class="where"><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#network-policy">Network policy that someone can debug</a> <a class="art" href="https://blog.weteachkubernetes.com/network-policy-you-can-debug/" target="_blank" rel="noopener">read it &rarr;</a></span></div></div>
+      </li>
+      <li class="c partial">
+        <span class="chip">partly covered</span>
+        <div class="body"><p class="t">Appropriately use kernel hardening tools such as AppArmor, seccomp</p><div class="where"><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#admission-policy">Admission control and policy as code</a> <a class="art" href="https://blog.weteachkubernetes.com/admission-control-and-policy-as-code/" target="_blank" rel="noopener">read it &rarr;</a></span></div><div class="miss"><b>Missing:</b> writing and loading a seccomp profile, AppArmor profiles, and RuntimeDefault as a baseline</div></div>
+      </li></ul>
+  </section>
+  <section class="dom">
+    <div class="dh">
+      <h2>Minimize Microservice Vulnerabilities</h2>
+      <span class="wt">20% of the exam</span>
+      <span class="sc">75% written here</span>
+    </div>
+    <div class="bar"><i style="width:75%"></i></div>
+    <ul class="comps">
+      <li class="c covered">
+        <span class="chip">written up</span>
+        <div class="body"><p class="t">Use appropriate pod security standards</p><div class="where"><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#admission-policy">Admission control and policy as code</a> <a class="art" href="https://blog.weteachkubernetes.com/admission-control-and-policy-as-code/" target="_blank" rel="noopener">read it &rarr;</a></span></div></div>
+      </li>
+      <li class="c covered">
+        <span class="chip">written up</span>
+        <div class="body"><p class="t">Manage Kubernetes secrets</p><div class="where"><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#config-secrets">Config, secrets and the twelve-factor edge cases</a> <a class="art" href="https://blog.weteachkubernetes.com/config-secrets-and-the-edge-cases/" target="_blank" rel="noopener">read it &rarr;</a></span></div></div>
+      </li>
+      <li class="c partial">
+        <span class="chip">partly covered</span>
+        <div class="body"><p class="t">Understand and implement isolation techniques (multi-tenancy, sandboxed containers, etc.)</p><div class="where"><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#rbac-tenancy">RBAC and multi-tenancy</a> <a class="art" href="https://blog.weteachkubernetes.com/rbac-and-multi-tenancy/" target="_blank" rel="noopener">read it &rarr;</a></span></div><div class="miss"><b>Missing:</b> sandboxed runtimes - gVisor and Kata - and when the kernel boundary is not enough</div></div>
+      </li>
+      <li class="c partial">
+        <span class="chip">partly covered</span>
+        <div class="body"><p class="t">Implement Pod-to-Pod encryption (Cilium, Istio)</p><div class="where"><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#gateway-mesh">Gateway API and the mesh decision</a> <a class="art" href="https://blog.weteachkubernetes.com/gateway-api-and-the-mesh-decision/" target="_blank" rel="noopener">read it &rarr;</a></span></div><div class="miss"><b>Missing:</b> actually turning on WireGuard or IPsec in Cilium, or mTLS in Istio, rather than arguing about whether to</div></div>
+      </li></ul>
+  </section>
+  <section class="dom">
+    <div class="dh">
+      <h2>Supply Chain Security</h2>
+      <span class="wt">20% of the exam</span>
+      <span class="sc">75% written here</span>
+    </div>
+    <div class="bar"><i style="width:75%"></i></div>
+    <ul class="comps">
+      <li class="c covered">
+        <span class="chip">written up</span>
+        <div class="body"><p class="t">Minimize base image footprint</p><div class="where"><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#containers-before-k8s">Containers before Kubernetes</a> <a class="art" href="https://blog.weteachkubernetes.com/containers-before-kubernetes/" target="_blank" rel="noopener">read it &rarr;</a></span></div></div>
+      </li>
+      <li class="c covered">
+        <span class="chip">written up</span>
+        <div class="body"><p class="t">Understand your supply chain (e.g. SBOM, CI/CD, artifact repositories)</p><div class="where"><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#supply-chain">Supply chain and image provenance</a> <a class="art" href="https://blog.weteachkubernetes.com/supply-chain-and-image-provenance/" target="_blank" rel="noopener">read it &rarr;</a></span></div></div>
+      </li>
+      <li class="c covered">
+        <span class="chip">written up</span>
+        <div class="body"><p class="t">Secure your supply chain (permitted registries, sign and validate artifacts, etc.)</p><div class="where"><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#supply-chain">Supply chain and image provenance</a> <a class="art" href="https://blog.weteachkubernetes.com/supply-chain-and-image-provenance/" target="_blank" rel="noopener">read it &rarr;</a></span><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#admission-policy">Admission control and policy as code</a> <a class="art" href="https://blog.weteachkubernetes.com/admission-control-and-policy-as-code/" target="_blank" rel="noopener">read it &rarr;</a></span></div></div>
+      </li>
+      <li class="c gap">
+        <span class="chip">not written yet</span>
+        <div class="body"><p class="t">Perform static analysis of user workloads and container images (e.g. Kubesec, KubeLinter)</p><div class="miss"><b>Missing:</b> kubesec, kube-linter and Trivy in CI, and which findings are worth failing a build over</div><div class="where"><a class="write" href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=needs a write-up: Perform static analysis of user workloads and container imag">claim this one &rarr;</a></div></div>
+      </li></ul>
+  </section>
+  <section class="dom">
+    <div class="dh">
+      <h2>Monitoring, Logging and Runtime Security</h2>
+      <span class="wt">20% of the exam</span>
+      <span class="sc">80% written here</span>
+    </div>
+    <div class="bar"><i style="width:80%"></i></div>
+    <ul class="comps">
+      <li class="c covered">
+        <span class="chip">written up</span>
+        <div class="body"><p class="t">Perform behavioral analytics to detect malicious activities</p><div class="where"><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#runtime-detect">Runtime detection and response</a> <a class="art" href="https://blog.weteachkubernetes.com/runtime-detection-and-response/" target="_blank" rel="noopener">read it &rarr;</a></span></div></div>
+      </li>
+      <li class="c covered">
+        <span class="chip">written up</span>
+        <div class="body"><p class="t">Detect threats within physical infrastructure, apps, networks, data, users and workloads</p><div class="where"><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#runtime-detect">Runtime detection and response</a> <a class="art" href="https://blog.weteachkubernetes.com/runtime-detection-and-response/" target="_blank" rel="noopener">read it &rarr;</a></span></div></div>
+      </li>
+      <li class="c covered">
+        <span class="chip">written up</span>
+        <div class="body"><p class="t">Investigate and identify phases of attack and bad actors within the environment</p><div class="where"><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#runtime-detect">Runtime detection and response</a> <a class="art" href="https://blog.weteachkubernetes.com/runtime-detection-and-response/" target="_blank" rel="noopener">read it &rarr;</a></span></div></div>
+      </li>
+      <li class="c gap">
+        <span class="chip">not written yet</span>
+        <div class="body"><p class="t">Ensure immutability of containers at runtime</p><div class="miss"><b>Missing:</b> readOnlyRootFilesystem, dropping write access to the image layer, and enforcing it at admission</div><div class="where"><a class="write" href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=needs a write-up: Ensure immutability of containers at runtime">claim this one &rarr;</a></div></div>
+      </li>
+      <li class="c covered">
+        <span class="chip">written up</span>
+        <div class="body"><p class="t">Use Kubernetes audit logs to monitor access</p><div class="where"><span class="lk"><a class="cp" href="https://weteachkubernetes.com/#runtime-detect">Runtime detection and response</a> <a class="art" href="https://blog.weteachkubernetes.com/runtime-detection-and-response/" target="_blank" rel="noopener">read it &rarr;</a></span></div></div>
+      </li></ul>
+  </section>
+
+  <div class="next">
+    <h2>What to write next</h2>
+    <p>The 6 outright gaps, ordered by how much of the exam their domain is worth.
+    Each one is also the most useful pull request available right now.</p>
+    <table>
+      <tr><th>Domain weight</th><th>Domain</th><th>Nothing covers this yet</th></tr>
+      <tr><td class="w">20%</td><td>Supply Chain Security</td><td>Perform static analysis of user workloads and container images (e.g. Kubesec, KubeLinter)</td></tr><tr><td class="w">20%</td><td>Monitoring, Logging and Runtime Security</td><td>Ensure immutability of containers at runtime</td></tr><tr><td class="w">15%</td><td>Cluster Setup</td><td>Use CIS benchmark to review the security configuration of Kubernetes components (etcd, kubelet, kubedns, kubeapi)</td></tr><tr><td class="w">15%</td><td>Cluster Setup</td><td>Protect node metadata and endpoints</td></tr><tr><td class="w">15%</td><td>Cluster Hardening</td><td>Upgrade Kubernetes to avoid vulnerabilities</td></tr><tr><td class="w">10%</td><td>System Hardening</td><td>Minimize host OS footprint (reduce attack surface)</td></tr>
+    </table>
+  </div>
+
+</div>
+
+<footer><div class="wrap">
+  Generated from <code>public/data/cks-curriculum.json</code> by <code>scripts/build_cks.py</code>.
+  Corrections to the mapping are welcome —
+  <a href="https://github.com/Kyle-Law/weteachkubernetes/issues/new?title=cks%20mapping">open an
+  issue</a>.
+</div></footer>
+
+</body>
+</html>
